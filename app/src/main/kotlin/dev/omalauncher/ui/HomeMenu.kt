@@ -94,7 +94,15 @@ fun HomeMenu(
             state.homeMenuOpen = false
             if (linux) state.packagesOpen = true else state.linuxOpen = true
         }
-        Box(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) { ThemeStrip(runtime.themes, gutter = 20.dp, onPick = ::pickTheme) }
+        Box(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) { ThemeStrip(
+                runtime.themes,
+                gutter = 20.dp,
+                onPick = ::pickTheme,
+                onBrowse = {
+                    state.homeMenuOpen = false
+                    state.themeBrowserOpen = true
+                },
+            ) }
     }
 }
 

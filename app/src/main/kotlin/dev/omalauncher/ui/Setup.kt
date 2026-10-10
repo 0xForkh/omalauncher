@@ -146,10 +146,10 @@ private fun Welcome(
     // Each theme starts downloading as it's selected, the default one right away.
     LaunchedEffect(Unit) { themes.prefetch(themes.picked) }
     Appear(1) {
-        ThemeStrip(themes) {
+        ThemeStrip(themes, onPick = {
             themes.pick(it)
             themes.prefetch(it.name)
-        }
+        })
     }
     Spacer(Modifier.height(32.dp))
     Appear(2) {
@@ -438,13 +438,15 @@ private fun LogTail(
 /**
  * Omarchy's themes as swatches in a horizontal row; tapping one recolors everything right away.
  * [gutter] is the parent's side padding, which the row scrolls under. By default a pick only
- * recolors, for setup where the full themes aren't downloaded yet.
+ * recolors, for setup where the full themes aren't downloaded yet. With [onBrowse], the row
+ * ends in a tile that opens the community themes.
  */
 @Composable
 internal fun ThemeStrip(
     themes: ThemeStore,
     gutter: Dp = Gutter,
     onPick: (BundledTheme) -> Unit = themes::pick,
+    onBrowse: (() -> Unit)? = null,
 ) {
     // Themes added in Linux since the launcher started.
     LaunchedEffect(Unit) { if (themes.loaded) themes.rescan() }
@@ -469,6 +471,7 @@ internal fun ThemeStrip(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(list, key = { it.name }) { theme -> ThemeSwatch(theme, theme.name == themes.picked) { onPick(theme) } }
+            if (onBrowse != null) item(key = "browse") { BrowseSwatch(onBrowse) }
         }
     }
 }
@@ -495,6 +498,24 @@ private fun ThemeSwatch(
             for (key in listOf("accent", "red", "yellow", "green", "magenta")) {
                 Box(Modifier.size(width = 14.dp, height = 6.dp).background(color(key)))
             }
+        }
+    }
+}
+
+/** The strip's last tile, shaped like a [ThemeSwatch]: opens the community themes. */
+@Composable
+private fun BrowseSwatch(onClick: () -> Unit) {
+    Column(
+        Modifier
+            .width(112.dp)
+            .frame(1.dp, Palette.border, Palette.surface, radius = 12.dp)
+            .clickable(onClick = onClick)
+            .padding(10.dp),
+    ) {
+        BasicText("more themes ›", style = Mono.copy(color = Palette.accent, fontSize = 11.sp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+            repeat(5) { Box(Modifier.size(width = 14.dp, height = 6.dp).background(Palette.border)) }
         }
     }
 }

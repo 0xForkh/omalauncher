@@ -87,6 +87,7 @@ private fun DesktopScreen(
             state.licensesOpen -> state.licensesOpen = false
             state.agentsOpen -> state.agentsOpen = false
             state.storeOpen -> state.storeOpen = false
+            state.themeBrowserOpen -> state.themeBrowserOpen = false
             state.themesOpen -> state.themesOpen = false
             state.packagesOpen -> state.packagesOpen = false
             state.settingsOpen -> state.settingsOpen = false
@@ -243,6 +244,7 @@ private fun ThemesOverlay(
     }
     if (state.packagesOpen) PackagesScreen(runtime, onDismiss = { state.packagesOpen = false })
     if (state.themesOpen) ThemePicker(runtime.themes, onDismiss = { state.themesOpen = false })
+    if (state.themeBrowserOpen) ThemeCatalogScreen(runtime.themes, onDismiss = { state.themeBrowserOpen = false })
     if (state.storeOpen) StoreScreen(runtime.widgets, runtime.agents.installed, state.currentPage, runtime.themes.picked, onDismiss = { state.storeOpen = false })
     if (state.licensesOpen) LicensesScreen(onDismiss = { state.licensesOpen = false })
     if (state.linuxOpen) LinuxScreen(runtime, onDismiss = { state.linuxOpen = false })
