@@ -1,6 +1,7 @@
 package dev.omalauncher.widgets.lang
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
@@ -607,5 +608,28 @@ class LangTest {
         }
         assertEquals(Str("[".repeat(100_000)), Json.parseOrText("[".repeat(100_000)))
         assertEquals(Lst(listOf(Lst(emptyList()))), Json.parse("[[]]"))
+    }
+
+    @Test fun shQuotesAValueAsOneShellWord() {
+        val owl6 = "meta { owl: 6 }"
+        assertEquals("'a b'", text("sh(\"a b\")", owl6))
+        assertEquals("'it'\\''s; rm -rf ~'", text("sh(\"it's; rm -rf ~\")", owl6))
+        assertEquals("''", text("sh(null)", owl6))
+        assertEquals("'3'", text("sh(3)", owl6))
+        assertTrue(compileError("widget {\n Text { text: sh(\"x\") } }").contains("sh needs owl 6"))
+    }
+
+    @Test fun commandsWithQuotedValuesAreListedAsTemplates() {
+        fun commands(body: String) = Compiler.compile("widget {\n meta { owl: 6 }\n state v = \"x\"\n state n = 1\n$body\n Text { text: v } }").commands
+        assertEquals(listOf("sed -i ${Compiler.NUMBER}d ~/todo.md"), commands("onTap: run(\"sed -i ${'$'}{int(n)}d ~/todo.md\")"))
+        assertEquals(listOf("true", "curl -d ${Compiler.VALUE} https://ha.local"), commands("onTap: run(n > 1 ? \"true\" : \"curl -d ${'$'}{sh(v)} https://ha.local\")"))
+        assertEquals(listOf("echo ${Compiler.VALUE}x"), commands("source o = cmd(\"echo \" + sh(v) + \"x\") every 1m"))
+        // Unquoted, or quoted where bash would undo it: it could run anything.
+        for (bad in listOf("echo ${'$'}{v}", "echo \\\"${'$'}{sh(v)}\\\"", "echo '${'$'}{sh(v)}'", "echo ok # ${'$'}{sh(v)}", "cat <<E\\n${'$'}{sh(v)}\\nE")) {
+            assertEquals(bad, listOf("run(…) built from widget values"), commands("onTap: run(\"$bad\")"))
+        }
+        assertTrue(Compiler.quotable("a ${Compiler.VALUE} 'b' \"c\" d#e ${Compiler.VALUE}"))
+        assertFalse(Compiler.quotable("a ${'$'}'x ${Compiler.VALUE}'"))
+        assertEquals(listOf("jq"), Compiler.compile("widget {\n meta { owl: 6 }\n state v = \"x\"\n onTap: run(\"jq -n ${'$'}{sh(v)}\")\n Text { text: v } }").programs.toList())
     }
 }
