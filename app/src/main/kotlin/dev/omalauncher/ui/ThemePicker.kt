@@ -1,6 +1,5 @@
 package dev.omalauncher.ui
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,10 +23,13 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,9 +37,12 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.omalauncher.theme.OmarchyTheme
+import dev.omalauncher.theme.ThemeDirs
 import dev.omalauncher.theme.ThemeDownload
+import dev.omalauncher.theme.ThemeInstall
 import dev.omalauncher.theme.ThemeStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -51,6 +56,16 @@ fun ThemePicker(
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    // Themes added in Linux since the launcher started.
+    LaunchedEffect(Unit) { if (store.loaded) store.rescan() }
+    var browsing by remember { mutableStateOf(false) }
+    var installOpen by remember { mutableStateOf(false) }
+    var removing by remember { mutableStateOf<OmarchyTheme?>(null) }
+    if (browsing) {
+        ThemeCatalogScreen(store, onDismiss = { browsing = false })
+        return
+    }
     OverlayPanel("themes", onDismiss) {
         // Style choices don't depend on a theme, so they're offered before themes are downloaded too.
         StyleOption("icons", listOf("monochrome", "colored"), if (LauncherStyle.monochromeIcons) 0 else 1) { store.setMonochromeIcons(it == 0) }
@@ -77,7 +92,6 @@ fun ThemePicker(
                     )
                 }
             }
-            val context = LocalContext.current
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -96,13 +110,61 @@ fun ThemePicker(
                     BasicText("[ use as android wallpaper + system colors ]", style = Mono.copy(color = Palette.accent))
                 }
             }
+            if (current.own != null) {
+                val source = remember(current) { ThemeDirs.sourceOf(current) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    BasicText(
+                        source?.label ?: "your own theme",
+                        Modifier.weight(1f),
+                        style = Mono.copy(color = Palette.muted),
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (source != null) BracketAction("update", Palette.accent) { scope.launch { store.update(current) } }
+                    BracketAction("remove", Palette.red) { removing = current }
+                }
+            }
         }
         LazyVerticalGrid(GridCells.Adaptive(150.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item(span = { GridItemSpan(maxLineSpan) }) {
-                BasicText("theme", Modifier.padding(top = 4.dp), style = Mono.copy(color = Palette.muted))
+                Column {
+                    Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        BasicText("theme", Modifier.weight(1f), style = Mono.copy(color = Palette.muted))
+                        BracketAction("browse", Palette.accent) { browsing = true }
+                        BracketAction("install", Palette.accent) {
+                            store.clearInstallError()
+                            installOpen = true
+                        }
+                    }
+                    InstallStatus(store)
+                }
             }
             items(store.themes, key = { it.name }) { theme ->
                 ThemeCard(theme, selected = theme.name == current?.name) { scope.launch { store.apply(theme) } }
+            }
+        }
+        if (installOpen) {
+            TextDialog(
+                "install theme",
+                "",
+                "install",
+                hint = "A theme's GitHub repo. It replaces an installed theme of the same name.",
+                onDismiss = { installOpen = false },
+            ) { url ->
+                installOpen = false
+                scope.launch { store.install(url) }
+            }
+        }
+        removing?.let { theme ->
+            val builtIn = theme.dirs.size > 1
+            ConfirmDialog(
+                "remove ${theme.title.lowercase()}?",
+                if (builtIn) "Your changes to it go; Omarchy's version stays." else "It's deleted from the phone and from Linux.",
+                "remove",
+                onDismiss = { removing = null },
+            ) {
+                removing = null
+                scope.launch { store.remove(theme) }
             }
         }
     }
@@ -203,3 +265,13 @@ private fun Thumbnail(
 }
 
 private fun String?.toColor(): Color = hexColor(this) ?: Color.Gray
+
+/** How installing a theme from its repo is going; tapping a failure clears it. Nothing while idle. */
+@Composable
+internal fun InstallStatus(store: ThemeStore) {
+    when (val state = store.installing) {
+        is ThemeInstall.Running -> BasicText("installing ${state.name}… ${state.megabytes} MB", style = Mono.copy(color = Palette.accent))
+        is ThemeInstall.Failed -> BasicText("install failed: ${state.message}", Modifier.clickable { store.clearInstallError() }, style = Mono.copy(color = Palette.red))
+        ThemeInstall.Idle -> {}
+    }
+}

@@ -44,6 +44,8 @@ class Proot(
         listOf(
             "$GUEST_HOME/.local/share/omarchy" to LauncherData.omarchyDir(context),
             "$GUEST_HOME/.config/omalauncher/widgets" to LauncherData.widgetsDir(context),
+            "$GUEST_HOME/.config/omarchy/themes" to LauncherData.userThemesDir(context),
+            "$GUEST_HOME/.config/omarchy/backgrounds" to LauncherData.userBackgroundsDir(context),
         )
 
     /** Host directories bound over guest paths by [command]. */

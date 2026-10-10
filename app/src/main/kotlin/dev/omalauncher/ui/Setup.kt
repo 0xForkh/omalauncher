@@ -89,7 +89,7 @@ internal fun SetupScreen(runtime: Runtime) {
             ) {
                 Wordmark()
                 if (started) {
-                    ThemeDownloadProgress(themes.bundled.firstOrNull { it.name == themes.picked }?.title?.lowercase() ?: themes.picked, error, onRetry = ::fetchTheme, onSkip = runtime::finishWelcome)
+                    ThemeDownloadProgress(themes.choices.firstOrNull { it.name == themes.picked }?.title?.lowercase() ?: themes.picked, error, onRetry = ::fetchTheme, onSkip = runtime::finishWelcome)
                 } else {
                     Welcome(themes, linux, { linux = !linux }, picked) { bin -> picked = if (bin in picked) picked - bin else picked + bin }
                 }
@@ -446,7 +446,9 @@ internal fun ThemeStrip(
     gutter: Dp = Gutter,
     onPick: (BundledTheme) -> Unit = themes::pick,
 ) {
-    val list = themes.bundled
+    // Themes added in Linux since the launcher started.
+    LaunchedEffect(Unit) { if (themes.loaded) themes.rescan() }
+    val list = themes.choices
     if (list.isEmpty()) return
     Column {
         Row {

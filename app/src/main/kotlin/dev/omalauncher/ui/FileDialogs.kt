@@ -63,6 +63,7 @@ internal fun TextDialog(
     title: String,
     initial: String,
     confirm: String,
+    hint: String? = null,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
 ) {
@@ -71,6 +72,7 @@ internal fun TextDialog(
     LaunchedEffect(Unit) { focus.requestFocus() }
     DialogFrame(onDismiss) {
         BasicText(title, style = Mono.copy(fontSize = 18.sp))
+        hint?.let { BasicText(it, style = Mono.copy(color = Palette.muted)) }
         BasicTextField(
             value = text,
             onValueChange = { text = it },
@@ -100,6 +102,8 @@ internal fun ConfirmDialog(
     message: String,
     confirm: String,
     onDismiss: () -> Unit,
+    /** Red by default: most confirmations are for something that can't be undone. */
+    confirmColor: Color = Palette.red,
     onConfirm: () -> Unit,
 ) {
     DialogFrame(onDismiss) {
@@ -107,7 +111,7 @@ internal fun ConfirmDialog(
         BasicText(message, style = Mono.copy(color = Palette.muted))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton("cancel", Palette.muted, onDismiss)
-            TextButton(confirm, Palette.red, onConfirm)
+            TextButton(confirm, confirmColor, onConfirm)
         }
     }
 }

@@ -20,12 +20,15 @@ class GuestThemeConfig(
     private val templatesDir = File(omarchyDir, "default/themed")
     private val currentDir = File(home, ".local/state/omarchy/current")
 
-    /** Renders [theme] into current/theme, which foot, btop and the rest include. */
+    /**
+     * Renders [theme] into current/theme, which foot, btop and the rest
+     * include. A file the theme ships wins over the template's.
+     */
     fun render(theme: OmarchyTheme) {
         val themeDir = File(currentDir, "theme")
         themeDir.deleteRecursively()
         themeDir.mkdirs()
-        theme.dir.listFiles { f -> f.isFile && f.extension != "png" }.orEmpty().forEach { it.copyTo(File(themeDir, it.name)) }
+        theme.guestFiles().forEach { (name, file) -> file.copyTo(File(themeDir, name)) }
         File(currentDir, "theme.name").writeText(theme.name + "\n")
         templatesDir.listFiles { f -> f.extension == "tpl" }.orEmpty().forEach { tpl ->
             val out = File(themeDir, tpl.nameWithoutExtension)
