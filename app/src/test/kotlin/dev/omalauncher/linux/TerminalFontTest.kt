@@ -43,4 +43,10 @@ class TerminalFontTest {
         assertEquals(10.0, TerminalFont.pointSize(2.625f, 1f, 2, TerminalText.Smaller.em), 0.0)
         assertEquals(14.0, TerminalFont.pointSize(2.625f, 1f, 2, TerminalText.Larger.em), 0.0)
     }
+
+    /** What fc-list finds in a fresh guest: the icon-only Nerd Font is foot's fallback, not a choice. */
+    @Test fun listsTextFontsOnly() {
+        val found = listOf("DejaVu Sans Mono", "JetBrains Mono", "JetBrains Mono NL", "Symbols Nerd Font Mono", "Noto Color Emoji", "")
+        assertEquals(listOf("DejaVu Sans Mono", "JetBrains Mono", "JetBrains Mono NL"), found.filter(TerminalFont::isTextFont))
+    }
 }

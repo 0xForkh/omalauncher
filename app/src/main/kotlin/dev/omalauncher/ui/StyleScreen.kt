@@ -10,6 +10,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -227,10 +228,17 @@ private fun BackgroundSection(
     }
 }
 
-/** The size terminals open at, on top of Android's font size; see [TerminalFont]. */
+/** The terminals' font and the size they open at, on top of Android's font size; see [TerminalFont]. */
 @Composable
 private fun TerminalSection(font: TerminalFont) {
+    LaunchedEffect(Unit) { font.familiesLoaded(withContext(Dispatchers.IO) { font.loadFamilies() }) }
     SectionLabel("terminal")
+    FontOption(font.families, font.family, font::select)
+    BasicText(
+        "terminals opened from now on · more with pacman, like ttf-cascadia-code",
+        Modifier.padding(start = 104.dp, bottom = 4.dp),
+        style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small),
+    )
     StyleOption("text", TerminalText.entries.map { it.label }, font.text.ordinal) { font.select(TerminalText.entries[it]) }
     // In portrait, where columns run short; landscape has plenty.
     val metrics = LocalContext.current.resources.displayMetrics
@@ -240,6 +248,32 @@ private fun TerminalSection(font: TerminalFont) {
         Modifier.padding(start = 104.dp, top = 2.dp),
         style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small),
     )
+}
+
+/** Font names run long: each is a chip of its own, and they wrap rather than scroll out of sight. */
+@Composable
+private fun FontOption(
+    families: List<String>,
+    selected: String,
+    onSelect: (String) -> Unit,
+) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        BasicText("font", Modifier.widthIn(min = 104.dp).padding(top = 8.dp, end = 8.dp), style = Mono.copy(color = Palette.muted), softWrap = false)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            for (family in families) {
+                val active = family == selected
+                BasicText(
+                    family,
+                    Modifier
+                        .frame(1.dp, Palette.border, if (active) Palette.accent else Color.Transparent, radius = 12.dp)
+                        .clickable { onSelect(family) }
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    style = Mono.copy(color = if (active) Palette.background else Palette.foreground),
+                    softWrap = false,
+                )
+            }
+        }
+    }
 }
 
 @Composable

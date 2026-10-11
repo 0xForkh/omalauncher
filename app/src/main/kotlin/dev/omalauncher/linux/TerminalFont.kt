@@ -12,12 +12,13 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 
 /**
- * The size foot draws text at. foot.ini includes [PATH] rather than fixing a
- * size, so every foot (opened from the launcher or from a shell) follows the
- * screen's density and Android's font size, as the launcher's own text does,
- * in the user's [text] size: more columns or bigger letters. foot reads it
- * as it starts; one already open catches up when it's shown again, with its
- * own zoom keys (see Runtime). Main thread.
+ * The font foot draws text in. foot.ini includes [PATH] rather than fixing
+ * one, so every foot (opened from the launcher or from a shell) gets the
+ * user's [family], at a size that follows the screen's density and Android's
+ * font size, as the launcher's own text does, in the user's [text] size: more
+ * columns or bigger letters. foot reads it as it starts; one already open
+ * catches up on the size when it's shown again, with its own zoom keys (see
+ * Runtime), but keeps its family. Main thread.
  */
 class TerminalFont(
     context: Context,
@@ -26,6 +27,13 @@ class TerminalFont(
     private val prefs = context.getSharedPreferences("launcher", Context.MODE_PRIVATE)
 
     var text by mutableStateOf(TerminalText.of(prefs.getString(TEXT, null)))
+        private set
+
+    var family by mutableStateOf(prefs.getString(FAMILY, null) ?: DEFAULT_FAMILY)
+        private set
+
+    /** The guest's monospace families, [family] among them; just it until [loadFamilies]. */
+    var families by mutableStateOf(listOf(family))
         private set
 
     /** The point size new terminals open at. */
@@ -39,8 +47,8 @@ class TerminalFont(
     private var density = 0f
     private var fontScale = 1f
 
-    /** Whether the file holds [size]; a write can fail before Linux is unpacked. */
-    private var written = false
+    /** What the file holds; null until written, as a write can fail before Linux is unpacked. */
+    private var written: String? = null
 
     /**
      * Android's display metrics and font size; [scale] is the integer
@@ -63,21 +71,40 @@ class TerminalFont(
         write()
     }
 
+    fun select(family: String) {
+        this.family = family
+        prefs.edit().putString(FAMILY, family).apply()
+        write()
+    }
+
+    /** Lists the guest's monospace fonts, as omarchy-font-list does; one installed with pacman shows up here. Blocking. */
+    fun loadFamilies(): List<String> {
+        val found = sortedSetOf<String>()
+        runCatching { proot.run(LIST_FAMILIES) { it.trim().takeIf(::isTextFont)?.let(found::add) } }
+            .onFailure { Log.w(TAG, "can't list fonts", it) }
+        return (found + family).sorted()
+    }
+
+    /** What [loadFamilies] found, from the main thread. */
+    fun familiesLoaded(list: List<String>) {
+        families = list
+    }
+
     /** The columns a terminal [widthPx] wide gets at [size]. */
     fun columns(widthPx: Int) = columns(widthPx, scale, size)
 
     private fun write() {
         if (density == 0f) return
-        val next = pointSize(density, fontScale, scale, text.em)
-        if (next == size && written) return
-        size = next
-        written = true
+        size = pointSize(density, fontScale, scale, text.em)
+        val content = "[main]\nfont=$family:size=${format(size)}\n"
+        if (content == written) return
+        written = content
         runCatching {
             val file = File(proot.home, PATH.removePrefix("~/"))
             file.parentFile?.mkdirs()
-            file.writeText("[main]\nfont=$FAMILY:size=${format(size)}\n")
+            file.writeText(content)
         }.onFailure {
-            written = false
+            written = null
             Log.w(TAG, "can't write the terminal font", it)
         }
     }
@@ -86,8 +113,11 @@ class TerminalFont(
         /** foot.ini's include; the launcher owns this file and rewrites it. */
         const val PATH = "~/.local/state/omalauncher/foot-font.ini"
 
-        /** The family foot.ini's font always was; an override (`-o main.font=`) must name it too. */
-        const val FAMILY = "JetBrains Mono"
+        /** The family foot.ini's font always was. */
+        private const val DEFAULT_FAMILY = "JetBrains Mono"
+
+        /** omarchy-font-list's: one family per monospace font file. */
+        private const val LIST_FAMILIES = "fc-list :spacing=100 -f '%{family[0]}\\n'"
 
         /** foot's font-size-adjustment: what its Ctrl+= and Ctrl+- change the size by, in points. */
         const val STEP = 0.5
@@ -105,6 +135,7 @@ class TerminalFont(
         private const val MIN_SIZE = 4.0
         private const val MAX_SIZE = 40.0
         private const val TEXT = "terminal_text"
+        private const val FAMILY = "terminal_font"
         private const val TAG = "terminal-font"
 
         /**
@@ -142,6 +173,9 @@ class TerminalFont(
             val fit = (widthPx - 2 * PAD * scale) / (cellPerPt * (columns + 1)).toDouble()
             return minOf(size, floor(fit * 2.0) / 2).coerceAtLeast(MIN_SIZE)
         }
+
+        /** Not emoji or icon-only fonts (Symbols Nerd Font, which foot falls back to for glyphs). */
+        fun isTextFont(family: String) = family.isNotEmpty() && !Regex("emoji|signwriting|omarchy|symbols", RegexOption.IGNORE_CASE).containsMatchIn(family)
 
         fun format(size: Double): String = String.format(Locale.ROOT, "%.1f", size)
 

@@ -470,7 +470,7 @@ class Runtime(
         val metrics = context.resources.displayMetrics
         val size = TerminalFont.fitting(BTOP_COLUMNS, metrics.widthPixels, outputScale(), terminalFont.size)
         if (size >= terminalFont.size) return ""
-        return " -o " + shellQuote("main.font=${TerminalFont.FAMILY}:size=${TerminalFont.format(size)}")
+        return " -o " + shellQuote("main.font=${terminalFont.family}:size=${TerminalFont.format(size)}")
     }
 
     /** Opens a pinned app from the home screen. A Linux one runs its current desktop entry, which an update may have changed. */

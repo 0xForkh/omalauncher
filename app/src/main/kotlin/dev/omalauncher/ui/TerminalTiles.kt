@@ -33,6 +33,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import dev.omalauncher.Runtime
+import dev.omalauncher.linux.TerminalFont
 import dev.omalauncher.linux.shellQuote
 import dev.omalauncher.wayland.WindowRenderer
 import dev.omalauncher.wayland.XdgToplevel
@@ -150,7 +151,7 @@ class TerminalTiles(
         term: EmbeddedTerminal,
         onExit: () -> Unit,
     ) {
-        val font = term.fontSize?.let { " -o " + shellQuote("main.font=$FONT:size=${"%.1f".format(java.util.Locale.ROOT, it)}") }.orEmpty()
+        val font = term.fontSize?.let { " -o " + shellQuote("main.font=${runtime.terminalFont.family}:size=${TerminalFont.format(it)}") }.orEmpty()
         val command = term.command?.let { " -e bash -c " + shellQuote(it) }.orEmpty()
         runtime.launch("foot --app-id=${term.appId}$font$command", onExit)
     }
@@ -163,9 +164,6 @@ class TerminalTiles(
     companion object {
         /** Tiles' foot app_ids, numbered on. */
         const val APP_ID_PREFIX = "omarchy.tile-"
-
-        /** foot.ini's font (see GuestThemeConfig); an override must name the family too. */
-        private const val FONT = "JetBrains Mono"
     }
 }
 
