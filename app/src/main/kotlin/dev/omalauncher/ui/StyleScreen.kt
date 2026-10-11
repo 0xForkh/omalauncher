@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -90,7 +91,7 @@ fun StyleScreen(
             )
             store.current?.let { BackgroundSection(store, it) }
             // Style choices don't depend on a theme, so they're offered before themes are downloaded too.
-            SectionLabel("home screen")
+            Heading("home screen")
             StyleOption("icons", listOf("monochrome", "colored"), if (LauncherStyle.monochromeIcons) 0 else 1) { store.setMonochromeIcons(it == 0) }
             StyleOption("home apps", listOf("boxed", "icon only"), if (LauncherStyle.bareAppIcons) 1 else 0) { store.setBareAppIcons(it == 1) }
             StyleOption("recent apps", listOf("shown", "hidden"), if (LauncherStyle.recentApps) 0 else 1) { store.setRecentApps(it == 0) }
@@ -134,8 +135,7 @@ private fun ThemeSection(
 ) {
     val scope = rememberCoroutineScope()
     val current = store.current
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        SectionLabel("theme", Modifier.weight(1f))
+    Heading("theme") {
         BracketAction("browse", Palette.accent, onBrowse)
         BracketAction("install", Palette.accent, onInstall)
     }
@@ -181,7 +181,7 @@ private fun BackgroundSection(
     val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) scope.launch { store.addBackground(uri) }
     }
-    SectionLabel("background")
+    Heading("background")
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(backgrounds, key = { it.path }) { file ->
             Thumbnail(
@@ -229,7 +229,7 @@ private fun BackgroundSection(
 @Composable
 private fun TerminalSection(font: TerminalFont) {
     LaunchedEffect(Unit) { font.refreshFamilies() }
-    SectionLabel("terminal")
+    Heading("terminal")
     FontOption(font.families, font.family, font::select)
     BasicText(
         "terminals opened from now on · more with pacman, like ttf-cascadia-code",
@@ -245,6 +245,18 @@ private fun TerminalSection(font: TerminalFont) {
         Modifier.padding(start = 104.dp, top = 2.dp),
         style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small),
     )
+}
+
+/** A section's title, set apart from the muted labels of the options under it by the accent color, as the weather screen sets its sections apart; [actions] go at the far end. */
+@Composable
+private fun Heading(
+    text: String,
+    actions: @Composable RowScope.() -> Unit = {},
+) {
+    Row(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        BasicText(text, Modifier.weight(1f), style = Mono.copy(color = Palette.accent), softWrap = false)
+        actions()
+    }
 }
 
 /** Font names run long: each is a chip of its own, and they wrap rather than scroll out of sight. */
