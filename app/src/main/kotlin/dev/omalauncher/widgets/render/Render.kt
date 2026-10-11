@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -121,10 +122,13 @@ fun WidgetScreen(
     modifier: Modifier = Modifier,
 ) {
     val nodes = inst.program.screen ?: return
-    val density = LocalDensity.current.density
     if (inst.program.animated) FrameClock(inst) { false }
-    Column(modifier.onSizeChanged { inst.setScreen((it.width / density).toDouble(), (it.height / density).toDouble()) }) {
-        Nodes(nodes, inst.root, inst, this)
+    BoxWithConstraints(modifier) {
+        // Set before the nodes compose, so the first frame already has the size instead of null.
+        inst.setScreen(maxWidth.value.toDouble(), maxHeight.value.toDouble())
+        Column(Modifier.fillMaxSize()) {
+            Nodes(nodes, inst.root, inst, this)
+        }
     }
 }
 
