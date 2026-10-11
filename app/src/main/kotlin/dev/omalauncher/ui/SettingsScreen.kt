@@ -85,7 +85,7 @@ fun SettingsScreen(
                 ) {
                     Column(Modifier.weight(1f)) {
                         BasicText(title, style = Mono.copy(fontSize = Mono.fontSize * 1.1f))
-                        BasicText(subtitle, style = Mono.copy(color = Palette.muted, fontSize = Mono.fontSize * 0.85f))
+                        BasicText(subtitle, style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small))
                     }
                     BasicText("›", style = Mono.copy(color = Palette.accent, fontSize = Mono.fontSize * 1.4f))
                 }
@@ -154,7 +154,7 @@ private fun UpdatesRow(runtime: Runtime) {
                 BasicText("system updates", style = Mono.copy(fontSize = Mono.fontSize * 1.1f))
                 BasicText(
                     status,
-                    style = Mono.copy(color = if ((pending?.count ?: 0) > 0 && !working) Palette.accent else Palette.muted, fontSize = Mono.fontSize * 0.85f),
+                    style = Mono.copy(color = if ((pending?.count ?: 0) > 0 && !working) Palette.accent else Palette.muted, fontSize = TextSize.Small),
                     maxLines = 3,
                 )
             }

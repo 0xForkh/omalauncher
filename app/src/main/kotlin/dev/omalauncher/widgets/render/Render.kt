@@ -115,6 +115,9 @@ fun WidgetContent(
     }
 }
 
+/** Widget text, 13sp as widgets were made for, whatever size the launcher's own text is. */
+internal val WidgetMono get() = Mono.copy(fontSize = 13.sp)
+
 /** The widget's screen { } block, filling [modifier]; `screenWidth` and `screenHeight` follow its size. */
 @Composable
 fun WidgetScreen(
@@ -292,7 +295,7 @@ private fun Element(
                     }.padding(horizontal = 10.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                BasicText(p.observe("text")?.text().orEmpty(), style = Mono, maxLines = 1, overflow = TextOverflow.Ellipsis, color = ColorProducer { color() })
+                BasicText(p.observe("text")?.text().orEmpty(), style = WidgetMono, maxLines = 1, overflow = TextOverflow.Ellipsis, color = ColorProducer { color() })
             }
         }
         "Progress" -> {
@@ -566,10 +569,10 @@ private fun TextNode(
     val style = p.observe("style")?.toString()
     val base =
         when (style) {
-            "huge" -> Mono.copy(fontSize = 44.sp)
-            "title" -> Mono.copy(fontSize = 20.sp)
-            "small", "label" -> Mono.copy(fontSize = 11.sp)
-            else -> Mono
+            "huge" -> WidgetMono.copy(fontSize = 44.sp)
+            "title" -> WidgetMono.copy(fontSize = 20.sp)
+            "small", "label" -> WidgetMono.copy(fontSize = 11.sp)
+            else -> WidgetMono
         }
     val defaultColor: () -> Color = if (style == "muted" || style == "label") ({ Palette.muted }) else ({ Palette.foreground })
     val color = p.color("color", defaultColor)

@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,12 +19,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -199,18 +202,22 @@ private fun StyleOption(
     onSelect: (Int) -> Unit,
 ) {
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        BasicText(label, Modifier.width(96.dp), style = Mono.copy(color = Palette.muted))
-        Row(Modifier.frame(1.dp, Palette.border, radius = 12.dp)) {
-            options.forEachIndexed { i, option ->
-                val active = i == selected
-                BasicText(
-                    option,
-                    Modifier
-                        .background(if (active) Palette.accent else Color.Transparent)
-                        .clickable { onSelect(i) }
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                    style = Mono.copy(color = if (active) Palette.background else Palette.foreground),
-                )
+        BasicText(label, Modifier.widthIn(min = 104.dp).padding(end = 8.dp), style = Mono.copy(color = Palette.muted), softWrap = false)
+        // At a large Android font size the options may not fit: they scroll rather than wrap.
+        Box(Modifier.horizontalScroll(rememberScrollState())) {
+            Row(Modifier.frame(1.dp, Palette.border, radius = 12.dp)) {
+                options.forEachIndexed { i, option ->
+                    val active = i == selected
+                    BasicText(
+                        option,
+                        Modifier
+                            .background(if (active) Palette.accent else Color.Transparent)
+                            .clickable { onSelect(i) }
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        style = Mono.copy(color = if (active) Palette.background else Palette.foreground),
+                        softWrap = false,
+                    )
+                }
             }
         }
     }
