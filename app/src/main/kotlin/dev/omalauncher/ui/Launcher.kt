@@ -172,7 +172,7 @@ private fun DesktopScreen(
         )
     }
     // The bar and the panel above it; the keyboard lifts both. Nothing here takes touches while the panel is closed,
-    // except the bar. Landscape folds them into a rail beside the grid, and unfolds them over it, centered.
+    // except the bar. A phone's landscape folds them into a rail beside the grid, and unfolds them over it, centered.
     val side = homeSide()
     if (side != null && !panelShown) {
         if (runtime.terminals.active == null) {

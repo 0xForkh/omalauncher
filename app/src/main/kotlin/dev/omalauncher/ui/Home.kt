@@ -165,7 +165,7 @@ fun HomeScreen(
     var origin by remember { mutableStateOf(Offset.Zero) }
     val extraKeys = terminals.active != null && extraKeysWanted()
     val side = homeSide()
-    val turned = side != null
+    val turned = homeTurned()
     val sideRoom = sideWidth()
     val barRoom = with(density) { state.barHeight.takeIf { it > 0 }?.toDp() ?: (PromptBarHeight + 12.dp) }
     LaunchedEffect(extraKeys) { if (!extraKeys) terminals.extraKeys = null }
@@ -193,12 +193,12 @@ fun HomeScreen(
             }
             // Room for the bar, which DesktopScreen draws over the pages (so the keyboard lifts it without shrinking
             // the grid). The grid ends with its own gap; below it the strip, a gap, the bar and a gap: the bar as
-            // measured, since a large font makes it taller. In landscape they stand beside it instead, on the side
-            // portrait's bottom turned to.
+            // measured, since a large font makes it taller. In a phone's landscape they stand beside it instead, on
+            // the side portrait's bottom turned to.
             .padding(
                 start = if (side == HomeSide.Left) sideRoom else 0.dp,
                 end = if (side == HomeSide.Right) sideRoom else 0.dp,
-                bottom = if (turned) 0.dp else barRoom,
+                bottom = if (side != null) 0.dp else barRoom,
             ),
     ) {
         HomeGrid(
@@ -273,7 +273,7 @@ fun HomeScreen(
             },
             // The recent apps strip's room: kept while it's empty, so tiles don't reflow when it fills, and still
             // home's to swipe and long-press there until it does.
-            room = if (LauncherStyle.recentApps && !turned) RecentStripHeight else 0.dp,
+            room = if (LauncherStyle.recentApps && side == null) RecentStripHeight else 0.dp,
             turned = turned,
             per = per,
             onLongPressEmpty = { openMenu(null) },
