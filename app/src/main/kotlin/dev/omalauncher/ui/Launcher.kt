@@ -209,7 +209,7 @@ private fun DesktopScreen(
                 }
             }
             // Hidden while a terminal tile types: it would sit on the keyboard, over the tile.
-            if (runtime.terminals.active == null) {
+            if (runtime.terminals.active == null || runtime.terminals.keyboardLeaving) {
                 // Home only: the open app list has everything.
                 if (LauncherStyle.recentApps && !panelShown) RecentStrip(runtime, handlers)
                 // Insets itself by the grid gap, so it lines up with the tiles and the gap still takes taps.
