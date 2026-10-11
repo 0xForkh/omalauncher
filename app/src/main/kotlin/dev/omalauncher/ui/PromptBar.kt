@@ -249,7 +249,7 @@ internal fun PromptBar(
                     }.background(Palette.background)
                     .clickable { speech.error = null }
                     .padding(horizontal = 10.dp, vertical = 4.dp),
-                style = Mono.copy(color = Palette.red, fontSize = Mono.fontSize * 0.9f),
+                style = Mono.copy(color = Palette.red, fontSize = TextSize.Small),
             )
         }
         Box(Modifier.onSizeChanged { frame = it.height }) {
@@ -257,7 +257,7 @@ internal fun PromptBar(
                 Modifier
                     .fillMaxWidth()
                     .heightIn(min = PromptBarHeight)
-                    .frame(2.dp, if (listening || focused) Palette.accent else Palette.border, Palette.background.copy(alpha = 0.88f))
+                    .tile(listening || focused)
                     .padding(start = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -271,7 +271,7 @@ internal fun PromptBar(
                     },
                     readOnly = listening,
                     maxLines = 5,
-                    textStyle = Mono.copy(fontSize = Mono.fontSize * 1.1f, color = if (listening) Palette.accent else Palette.foreground),
+                    textStyle = Mono.copy(fontSize = TextSize.Item, color = if (listening) Palette.accent else Palette.foreground),
                     cursorBrush = SolidColor(Palette.accent),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                     keyboardActions = KeyboardActions(onSend = { submit() }),
@@ -307,7 +307,7 @@ internal fun PromptBar(
                                     !linux || agent == null -> "open an app…"
                                     else -> "open an app or ask ${agent.bin}…"
                                 }
-                            BasicText(hint, style = Mono.copy(color = Palette.muted, fontSize = Mono.fontSize * 1.1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            BasicText(hint, style = Mono.copy(color = Palette.muted, fontSize = TextSize.Item), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         inner()
                         }

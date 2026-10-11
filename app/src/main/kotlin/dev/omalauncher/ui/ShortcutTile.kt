@@ -87,7 +87,7 @@ fun ShortcutTile(
 /** An app tile's frame, or none for bare icons unless [focused]. */
 internal fun Modifier.tileFrame(focused: Boolean) =
     when {
-        !LauncherStyle.bareAppIcons -> frame(2.dp, if (focused) Palette.accent else Palette.border, Palette.background.copy(alpha = 0.88f))
+        !LauncherStyle.bareAppIcons -> tile(focused)
         // Bare icons still show which tile is focused or being edited.
         focused -> frame(2.dp, Palette.accent)
         else -> this

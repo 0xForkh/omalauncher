@@ -87,6 +87,9 @@ object Palette {
     val border get() = current.border
     val red get() = current.red
     val green get() = current.green
+
+    /** The translucent fill of tiles, bars and rails over the wallpaper. */
+    val glass get() = background.copy(alpha = 0.88f)
 }
 
 /** How the launcher draws itself, independent of the theme's colors. Saved by ThemeStore. */
@@ -135,6 +138,9 @@ fun Modifier.frame(
     val shape = LauncherStyle.shape(radius)
     return clip(shape).background(fill, shape).border(width, color, shape)
 }
+
+/** A home-screen surface over the wallpaper: tiles, the prompt bar, the rails; accent while [focused]. */
+fun Modifier.tile(focused: Boolean = false): Modifier = frame(2.dp, if (focused) Palette.accent else Palette.border, Palette.glass)
 
 /** The launcher's text style in the theme's foreground color. */
 val Mono get() = Palette.current.mono

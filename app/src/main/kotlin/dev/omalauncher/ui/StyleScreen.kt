@@ -276,12 +276,6 @@ private fun FontOption(
     }
 }
 
-@Composable
-private fun SectionLabel(
-    text: String,
-    modifier: Modifier = Modifier,
-) = BasicText(text, modifier.padding(top = 12.dp, bottom = 4.dp), style = Mono.copy(color = Palette.muted))
-
 /** A labeled segmented choice: the picked option fills with the accent color. */
 @Composable
 private fun StyleOption(
@@ -332,9 +326,9 @@ private fun DownloadPrompt(
             is ThemeDownload.Running -> BasicText("downloading… ${state.megabytes} MB", style = Mono.copy(color = Palette.accent))
             is ThemeDownload.Failed -> {
                 BasicText("failed: ${state.message}", style = Mono.copy(color = Palette.red))
-                Box(Modifier.clickable(onClick = onDownload).padding(8.dp)) { BasicText("[ retry ]", style = Mono.copy(color = Palette.accent)) }
+                BracketAction("retry", Palette.accent, onDownload)
             }
-            ThemeDownload.Idle -> Box(Modifier.clickable(onClick = onDownload).padding(8.dp)) { BasicText("[ download themes ]", style = Mono.copy(color = Palette.accent)) }
+            ThemeDownload.Idle -> BracketAction("download themes", Palette.accent, onDownload)
         }
     }
 }
@@ -354,7 +348,7 @@ private fun ThemeCard(
     ) {
         Thumbnail(theme.preview, selected = false, modifier = Modifier.fillMaxWidth().aspectRatio(16f / 10f), onClick = onClick)
         Row(Modifier.padding(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            BasicText(theme.title, Modifier.weight(1f), style = Mono.copy(color = theme.colors["foreground"].toColor(), fontSize = Mono.fontSize * 0.9f), maxLines = 1)
+            BasicText(theme.title, Modifier.weight(1f), style = Mono.copy(color = theme.colors["foreground"].toColor(), fontSize = TextSize.Small), maxLines = 1)
             for (key in listOf("accent", "red", "green", "yellow")) {
                 Box(Modifier.padding(start = 2.dp).size(8.dp).background(theme.colors[key].toColor()))
             }

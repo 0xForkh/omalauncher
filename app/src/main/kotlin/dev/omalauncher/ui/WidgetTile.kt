@@ -44,7 +44,7 @@ internal fun WidgetTile(
 ) {
     Box(
         modifier
-            .frame(2.dp, if (focused) Palette.accent else Palette.border, Palette.background.copy(alpha = 0.88f))
+            .tile(focused)
             .pointerInput(spec) { detectTapGestures(onTap = { onTap() }) },
     ) {
         if (waitsForLinux != null) {

@@ -102,7 +102,7 @@ private fun PackageRow(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    BasicText(pkg.name, style = Mono.copy(fontSize = Mono.fontSize * 1.1f))
+                    BasicText(pkg.name, style = Mono.copy(fontSize = TextSize.Item))
                     Spacer(Modifier.padding(start = 8.dp))
                     BasicText(
                         listOfNotNull(pkg.repo, pkg.version).joinToString(" "),

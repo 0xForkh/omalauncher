@@ -53,7 +53,7 @@ fun OverlayPanel(
                 .padding(12.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                BasicText(title, style = Mono.copy(color = Palette.accent, fontSize = Mono.fontSize * 1.3f))
+                BasicText(title, style = Mono.copy(color = Palette.accent, fontSize = TextSize.Title))
                 Spacer(Modifier.weight(1f))
                 actions()
                 Box(Modifier.clickable(onClick = onDismiss).padding(8.dp)) { BasicText("✕", style = Mono.copy(color = Palette.red)) }
@@ -63,6 +63,13 @@ fun OverlayPanel(
         }
     }
 }
+
+/** A muted heading over a group of rows: settings sections, the app drawer's letters. */
+@Composable
+fun SectionLabel(
+    text: String,
+    modifier: Modifier = Modifier,
+) = BasicText(text, modifier.padding(top = 12.dp, bottom = 4.dp), style = Mono.copy(color = Palette.muted))
 
 /** A terminal-style `[ label ]` button. */
 @Composable

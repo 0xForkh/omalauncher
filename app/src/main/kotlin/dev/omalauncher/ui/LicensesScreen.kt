@@ -140,7 +140,7 @@ fun LicensesScreen(onDismiss: () -> Unit) {
             item {
                 BasicText(
                     "Omalauncher ${BuildConfig.VERSION_NAME} · © 2026 Simon Schubert\n\nIt includes the open source software below.",
-                    style = Mono.copy(color = Palette.muted, fontSize = Mono.fontSize * 0.9f),
+                    style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small),
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
                 )
             }
@@ -156,7 +156,7 @@ fun LicensesScreen(onDismiss: () -> Unit) {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            BasicText(c.name, style = Mono.copy(fontSize = Mono.fontSize * 1.1f))
+                            BasicText(c.name, style = Mono.copy(fontSize = TextSize.Item))
                             BasicText("${c.license} · ${c.use}", style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small))
                         }
                         BasicText(if (expanded) "⌄" else "›", style = Mono.copy(color = Palette.accent, fontSize = Mono.fontSize * 1.4f))
