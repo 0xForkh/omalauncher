@@ -68,8 +68,14 @@ class KeyboardBridge(
     }
 
     fun type(text: CharSequence) {
-        for (c in text) {
-            val (code, shift) = Keys.forChar(c) ?: continue
+        for (cp in text.codePoints().toArray()) {
+            val mapped = if (cp <= 0xffff) Keys.forChar(cp.toChar()) else null
+            if (mapped == null) {
+                // Not on a US key, like æ, 你 or an emoji: the keymap grows a key for it.
+                if (!Character.isISOControl(cp)) wm.server.postInput { typeCodePoint(cp) }
+                continue
+            }
+            val (code, shift) = mapped
             withLatched {
                 if (shift) key(Keys.KEY_LEFTSHIFT, true)
                 key(code, true)
@@ -137,10 +143,31 @@ class KeyboardSink(
             InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
         outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN or EditorInfo.IME_FLAG_NO_EXTRACT_UI
         return object : BaseInputConnection(this, false) {
+            /**
+             * Text the IME is still composing, like pinyin before a candidate is picked. A window
+             * can't show it, and the IME's candidate bar does, so it's only typed once finished.
+             */
+            private var composing: CharSequence = ""
+
+            override fun setComposingText(
+                text: CharSequence,
+                newCursorPosition: Int,
+            ): Boolean {
+                composing = text
+                return true
+            }
+
+            override fun finishComposingText(): Boolean {
+                bridge.type(composing)
+                composing = ""
+                return true
+            }
+
             override fun commitText(
                 text: CharSequence,
                 newCursorPosition: Int,
             ): Boolean {
+                composing = ""
                 bridge.type(text)
                 return true
             }
@@ -154,7 +181,12 @@ class KeyboardSink(
             }
 
             override fun sendKeyEvent(event: KeyEvent): Boolean {
-                bridge.handle(event)
+                // Text with no key code, which some IMEs send as one event.
+                if (event.action == KeyEvent.ACTION_MULTIPLE && event.keyCode == KeyEvent.KEYCODE_UNKNOWN) {
+                    event.characters?.let(bridge::type)
+                } else {
+                    bridge.handle(event)
+                }
                 return true
             }
         }
