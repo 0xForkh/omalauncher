@@ -2,6 +2,7 @@ package dev.omalauncher.widgets
 
 import android.content.ComponentName
 import android.content.Context
+import dev.omalauncher.AndroidApp
 import androidx.compose.runtime.mutableStateListOf
 import dev.omalauncher.linux.LinuxApp
 import dev.omalauncher.upgrade.Versioned
@@ -36,6 +37,8 @@ data class Shortcut(
     override val page: Int,
     val label: String,
     val component: ComponentName? = null,
+    /** [component]'s profile, as in [AndroidApp.profile]. */
+    val profile: Long? = null,
     val linux: LinuxApp? = null,
     val folder: String? = null,
 ) : HomeItem {
@@ -187,16 +190,16 @@ class Shortcuts(
             page = o.optInt("page", 1),
             label = o.getString("label"),
             component = o.optString("component").ifEmpty { null }?.let(ComponentName::unflattenFromString),
+            profile = if (o.has("profile")) o.getLong("profile") else null,
             linux = linux,
             folder = o.optString("folder").ifEmpty { null },
         )
     }
 
     fun addAndroid(
-        label: String,
-        component: ComponentName,
+        app: AndroidApp,
         page: Int,
-    ) = add(Shortcut("app:" + component.flattenToShortString(), page, label, component = component))
+    ) = add(Shortcut("app:" + app.key, page, app.label, component = app.component, profile = app.profile))
 
     fun addLinux(
         app: LinuxApp,
@@ -250,6 +253,7 @@ class Shortcuts(
                     .put("label", s.label)
                     .putOpt("folder", s.folder)
             s.component?.let { o.put("component", it.flattenToString()) }
+            s.profile?.let { o.put("profile", it) }
             // A snapshot of the desktop entry, for when it's gone; while it exists, the launcher runs the current one.
             s.linux?.let {
                 o.put(

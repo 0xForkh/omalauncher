@@ -6,6 +6,9 @@ Dates are when the build was uploaded to Play.
 
 ## Unreleased
 
+- Apps from a work profile show up next to your own, marked with a briefcase,
+  and dimmed while work apps are paused.
+
 ## 0.5.0 (versionCode 10) – 2026-10-11
 
 - Add your own themes, like Omarchy's, and your own picture as the background.

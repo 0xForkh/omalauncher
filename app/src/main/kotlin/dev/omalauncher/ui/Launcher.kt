@@ -1,6 +1,5 @@
 package dev.omalauncher.ui
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.activity.compose.BackHandler
@@ -130,8 +129,7 @@ private fun DesktopScreen(
         state.closeNow()
         when (hit) {
             is AppHit.Linux -> runtime.launch(hit.app)
-            // Uninstalled or disabled since the list was loaded.
-            is AppHit.Android -> runCatching { context.startActivity(hit.app.intent) }.onFailure { Log.w("launcher", "cannot open ${hit.app.component}", it) }
+            is AppHit.Android -> runtime.androidApps.open(hit.app)
         }
     }
 
@@ -143,7 +141,7 @@ private fun DesktopScreen(
                 pin = { hit ->
                     when (hit) {
                         is AppHit.Linux -> runtime.widgets.shortcuts.addLinux(hit.app, state.currentPage)
-                        is AppHit.Android -> runtime.widgets.shortcuts.addAndroid(hit.app.label, hit.app.component, state.currentPage)
+                        is AppHit.Android -> runtime.widgets.shortcuts.addAndroid(hit.app, state.currentPage)
                     }
                     state.close()
                 },
