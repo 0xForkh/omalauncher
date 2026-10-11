@@ -42,7 +42,7 @@ fun OverlayPanel(
             .background(Palette.overlay)
             .clickable(onClick = onDismiss)
             .safeDrawingPadding()
-            .padding(12.dp),
+            .padding(HomeGap),
     ) {
         Column(
             Modifier

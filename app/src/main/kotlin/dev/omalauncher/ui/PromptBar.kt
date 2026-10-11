@@ -225,7 +225,7 @@ internal fun PromptBar(
     // Measured rather than assumed (a large system font makes the bar taller), and passed on while home shows:
     // with the panel open the bar can grow by lines of text that home shouldn't make room for.
     var frame by remember { mutableIntStateOf(0) }
-    val gap = with(LocalDensity.current) { 6.dp.roundToPx() }
+    val gap = with(LocalDensity.current) { HomeGap.roundToPx() }
     LaunchedEffect(frame, panelShown, gap) { if (frame > 0 && !panelShown) state.barHeight = frame + 2 * gap }
     // The whole bar and the gutter around it focus the field, not just the text: it's the main way in.
     Column(

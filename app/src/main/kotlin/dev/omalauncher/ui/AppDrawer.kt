@@ -176,7 +176,7 @@ internal fun RecentStrip(
     LaunchedEffect(runtime.usage.settled) { listState.scrollToItem(0) }
     Box(
         modifier
-            .then(if (vertical) Modifier.fillMaxHeight().width(RecentStripHeight) else Modifier.padding(horizontal = 6.dp).fillMaxWidth().height(RecentStripHeight))
+            .then(if (vertical) Modifier.fillMaxHeight().width(RecentStripHeight) else Modifier.padding(horizontal = HomeGap).fillMaxWidth().height(RecentStripHeight))
             .then(if (bare) Modifier else Modifier.tile()),
         contentAlignment = if (vertical) Alignment.TopCenter else Alignment.CenterStart,
     ) {

@@ -139,6 +139,12 @@ fun Modifier.frame(
     return clip(shape).background(fill, shape).border(width, color, shape)
 }
 
+/**
+ * Omarchy's gap between framed surfaces: between home's tiles, from them to the screen's
+ * safe edges, and from full-screen panels to those edges, so a panel's frame lines up with the tiles'.
+ */
+val HomeGap = 6.dp
+
 /** A home-screen surface over the wallpaper: tiles, the prompt bar, the rails; accent while [focused]. */
 fun Modifier.tile(focused: Boolean = false): Modifier = frame(2.dp, if (focused) Palette.accent else Palette.border, Palette.glass)
 

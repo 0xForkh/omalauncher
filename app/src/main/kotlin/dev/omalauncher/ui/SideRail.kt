@@ -95,7 +95,7 @@ internal fun showsTwoPages(window: IntSize) = window.width / 2f / window.height 
 @Composable
 internal fun sideWidth(): Dp =
     with(LocalDensity.current) {
-        val gap = 6.dp.roundToPx()
+        val gap = HomeGap.roundToPx()
         ((if (LauncherStyle.recentApps) RecentStripHeight.roundToPx() + gap else 0) + PromptBarHeight.roundToPx() + gap).toDp()
     }
 
