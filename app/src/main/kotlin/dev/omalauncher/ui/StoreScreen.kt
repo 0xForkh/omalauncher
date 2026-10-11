@@ -52,7 +52,7 @@ import dev.omalauncher.widgets.market.CatalogEntry
 import kotlinx.coroutines.launch
 
 /**
- * The widget store: a terminal tile for each installed coding agent, then
+ * The widget store: built-in terminal tiles (a plain shell, and one per installed coding agent), then
  * reviewed widgets from the marketplace repo as a grid of previews, with
  * search and category tabs. Tapping a widget opens its page, which shows what
  * it installs and runs; from there it goes on the current page (or updates).
@@ -144,10 +144,24 @@ fun StoreScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            if (agents.isNotEmpty() && tab == ALL && q.isEmpty()) {
-                item(key = "agents", span = { GridItemSpan(maxLineSpan) }) { Caption("your agents, each in a terminal tile") }
+            if (tab == ALL && q.isEmpty()) {
+                item(key = "builtin", span = { GridItemSpan(maxLineSpan) }) { Caption("built in") }
+                item(key = "terminal", span = { GridItemSpan(maxLineSpan) }) {
+                    BuiltInEntry("terminal", "6x4 · a shell in ~", "A shell on the home screen. Add as many as you like; tap one to type.", added = false, page = page) {
+                        scope.launch {
+                            engine.addTerminalWidget(page)
+                            onDismiss()
+                        }
+                    }
+                }
                 items(agents, key = { "agent:" + it.bin }, span = { GridItemSpan(maxLineSpan) }) { agent ->
-                    AgentEntry(agent, added = engine.hasAgentWidget(agent), page = page) {
+                    BuiltInEntry(
+                        agent.name,
+                        "6x6 · runs ${agent.bin} in ~",
+                        "${agent.description}, in a terminal on the home screen. Tap the tile to type.",
+                        added = engine.hasAgentWidget(agent),
+                        page = page,
+                    ) {
                         scope.launch {
                             engine.addAgentWidget(agent, page)
                             onDismiss()
@@ -194,10 +208,12 @@ private fun Chip(
     )
 }
 
-/** A built-in entry: the agent's CLI in a terminal tile, straight from the launcher rather than the catalog. */
+/** A built-in entry: a terminal tile, plain or running an agent's CLI, straight from the launcher rather than the catalog. */
 @Composable
-private fun AgentEntry(
-    agent: Agent,
+private fun BuiltInEntry(
+    name: String,
+    details: String,
+    description: String,
     added: Boolean,
     page: Int,
     onAdd: () -> Unit,
@@ -211,11 +227,11 @@ private fun AgentEntry(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            BasicText(agent.name, Modifier.weight(1f), style = Mono.copy(fontSize = TextSize.Item))
+            BasicText(name, Modifier.weight(1f), style = Mono.copy(fontSize = TextSize.Item))
             BasicText(if (added) "on the home screen" else "tap to add to page $page", style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small))
         }
-        BasicText("built in · 6x6 · runs ${agent.bin} in ~", style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small))
-        BasicText("${agent.description}, in a terminal on the home screen. Tap the tile to type.", style = Mono.copy(fontSize = TextSize.Small))
+        BasicText("built in · $details", style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small))
+        BasicText(description, style = Mono.copy(fontSize = TextSize.Small))
     }
 }
 
