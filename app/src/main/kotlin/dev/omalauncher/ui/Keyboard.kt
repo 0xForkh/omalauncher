@@ -1,6 +1,10 @@
 package dev.omalauncher.ui
 
 import android.content.Context
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
 import android.text.InputType
 import android.view.KeyEvent
 import android.view.View
@@ -135,12 +139,41 @@ class KeyboardSink(
         isFocusableInTouchMode = true
     }
 
+    /** Whether the field was last offered as plain text, for a Chinese, Japanese or Korean keyboard. */
+    private var cjk = false
+
+    /** Restarts the field when the keyboard switches between a CJK language and another one. */
+    private val subtypeObserver =
+        object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                if (softKeyboard && cjkKeyboard() != cjk) imm().restartInput(this@KeyboardSink)
+            }
+        }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        val uri = Settings.Secure.getUriFor(Settings.Secure.SELECTED_INPUT_METHOD_SUBTYPE)
+        context.contentResolver.registerContentObserver(uri, false, subtypeObserver)
+    }
+
+    override fun onDetachedFromWindow() {
+        context.contentResolver.unregisterContentObserver(subtypeObserver)
+        super.onDetachedFromWindow()
+    }
+
     override fun onCheckIsTextEditor() = softKeyboard
 
     override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection {
-        // Like Termux: no suggestions or autocorrect, raw keys where the IME allows.
-        outAttrs.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD or
-            InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        cjk = cjkKeyboard()
+        // Like Termux: no suggestions or autocorrect, raw keys where the IME allows. Gboard
+        // drops pinyin and the like in such a field, so those get plain text, autocorrect and all.
+        outAttrs.inputType =
+            if (cjk) {
+                InputType.TYPE_CLASS_TEXT
+            } else {
+                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD or
+                    InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            }
         outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN or EditorInfo.IME_FLAG_NO_EXTRACT_UI
         return object : BaseInputConnection(this, false) {
             /**
@@ -192,10 +225,20 @@ class KeyboardSink(
         }
     }
 
+    private fun imm() = context.getSystemService(InputMethodManager::class.java)
+
+    /** Whether the keyboard is set to Chinese, Japanese or Korean. */
+    private fun cjkKeyboard(): Boolean {
+        val subtype = imm().currentInputMethodSubtype ?: return false
+        @Suppress("DEPRECATION")
+        val language = subtype.languageTag.ifEmpty { subtype.locale }.substringBefore('-').substringBefore('_')
+        return language in cjkLanguages
+    }
+
     fun toggle() = if (softKeyboard) hide() else show()
 
     fun show() {
-        val imm = context.getSystemService(InputMethodManager::class.java)
+        val imm = imm()
         softKeyboard = true
         requestFocus()
         imm.restartInput(this)
@@ -204,12 +247,14 @@ class KeyboardSink(
 
     fun hide() {
         if (!softKeyboard) return
-        val imm = context.getSystemService(InputMethodManager::class.java)
+        val imm = imm()
         imm.hideSoftInputFromWindow(windowToken, 0)
         softKeyboard = false
         bridge.clearLatches()
         imm.restartInput(this)
     }
 }
+
+private val cjkLanguages = setOf("zh", "ja", "ko")
 
 private val volumeKeys = setOf(KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_VOLUME_MUTE)
