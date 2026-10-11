@@ -355,9 +355,9 @@ private fun StageRow(
     Row {
         Box(Modifier.width(28.dp)) {
             when (status) {
-                StageStatus.Done -> BasicText("\udb80\udd2c", style = Mono.copy(color = Palette.green, fontFamily = NerdSymbols))
+                StageStatus.Done -> Symbol(Glyph.Check, Palette.green)
                 StageStatus.Running -> Spinner()
-                StageStatus.Failed -> BasicText("\udb80\udd56", style = Mono.copy(color = Palette.red, fontFamily = NerdSymbols))
+                StageStatus.Failed -> Symbol(Glyph.Close, Palette.red)
                 StageStatus.Pending -> BasicText("·", style = Mono.copy(color = Palette.border))
             }
         }

@@ -159,7 +159,7 @@ fun LicensesScreen(onDismiss: () -> Unit) {
                             BasicText(c.name, style = Mono.copy(fontSize = TextSize.Item))
                             BasicText("${c.license} · ${c.use}", style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small))
                         }
-                        BasicText(if (expanded) "⌄" else "›", style = Mono.copy(color = Palette.accent, fontSize = Mono.fontSize * 1.4f))
+                        Symbol(if (expanded) Glyph.ChevronDown else Glyph.ChevronRight, Palette.accent, fontSize = TextSize.Title)
                     }
                     if (expanded) Details(c)
                 }

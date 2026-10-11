@@ -56,7 +56,7 @@ fun OverlayPanel(
                 BasicText(title, style = Mono.copy(color = Palette.accent, fontSize = TextSize.Title))
                 Spacer(Modifier.weight(1f))
                 actions()
-                Box(Modifier.clickable(onClick = onDismiss).padding(8.dp)) { BasicText("✕", style = Mono.copy(color = Palette.red)) }
+                Symbol(Glyph.Close, Palette.red, Modifier.clickable(onClick = onDismiss).padding(8.dp), TextSize.Title)
             }
             Spacer(Modifier.height(8.dp))
             content()
@@ -70,6 +70,15 @@ fun SectionLabel(
     text: String,
     modifier: Modifier = Modifier,
 ) = BasicText(text, modifier.padding(top = 12.dp, bottom = 4.dp), style = Mono.copy(color = Palette.muted))
+
+/** A [Glyph] from the launcher's Nerd Font subset, sized like text. */
+@Composable
+fun Symbol(
+    glyph: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    fontSize: TextUnit = TextSize.Body,
+) = BasicText(glyph, modifier, style = Mono.copy(color = color, fontSize = fontSize, fontFamily = NerdSymbols))
 
 /** A terminal-style `[ label ]` button. */
 @Composable

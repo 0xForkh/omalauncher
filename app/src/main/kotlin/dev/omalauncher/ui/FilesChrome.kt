@@ -86,7 +86,7 @@ internal fun Breadcrumbs(
         items(crumbs.size) { i ->
             val (label, target) = crumbs[i]
             val last = i == crumbs.lastIndex
-            if (i > 1) BasicText("›", Modifier.padding(horizontal = 2.dp), style = Mono.copy(color = Palette.muted))
+            if (i > 1) Symbol(Glyph.ChevronRight, Palette.muted, Modifier.padding(horizontal = 2.dp))
             BasicText(
                 label,
                 Modifier.clip(LauncherStyle.shape(8.dp)).clickable(enabled = !last) { onNavigate(target) }.padding(horizontal = 6.dp, vertical = 6.dp),

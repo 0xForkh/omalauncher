@@ -87,7 +87,7 @@ fun SettingsScreen(
                         BasicText(title, style = Mono.copy(fontSize = TextSize.Item))
                         BasicText(subtitle, style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small))
                     }
-                    BasicText("›", style = Mono.copy(color = Palette.accent, fontSize = Mono.fontSize * 1.4f))
+                    Symbol(Glyph.ChevronRight, Palette.accent, fontSize = TextSize.Title)
                 }
             }
         }

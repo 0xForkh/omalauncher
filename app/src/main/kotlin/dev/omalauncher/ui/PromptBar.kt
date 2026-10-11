@@ -466,7 +466,7 @@ private fun AgentPicker(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BasicText(agent?.bin ?: "agent", style = Mono.copy(color = if (agent == null) Palette.muted else Palette.accent))
-            BasicText(if (open) " ▴" else " ▾", style = Mono.copy(color = Palette.muted))
+            Symbol(if (open) Glyph.ChevronUp else Glyph.ChevronDown, Palette.muted, Modifier.padding(start = 4.dp))
         }
         if (open) {
             Popup(
