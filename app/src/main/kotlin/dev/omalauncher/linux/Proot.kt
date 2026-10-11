@@ -139,6 +139,10 @@ class Proot(
                 // As (fake) root, GNU tar restores directory modes with fchmodat(AT_SYMLINK_NOFOLLOW),
                 // which fails with ENOENT under proot on newer kernels and fails the extraction (mise.run).
                 "TAR_OPTIONS=--no-same-permissions",
+                // mise's default npm installer hardlinks packages out of its store in ~/.cache/mise; under proot
+                // (--link2symlink) those become symlinks into the store, and `mise cache clear` after installs and
+                // updates then breaks them (Grok: "no platform binary installed"). npm copies the files.
+                "MISE_NPM_PACKAGE_MANAGER=npm",
                 "BROWSER=xdg-open",
                 // micro takes taps and scrolling; yazi and git open files with it.
                 "EDITOR=micro",
