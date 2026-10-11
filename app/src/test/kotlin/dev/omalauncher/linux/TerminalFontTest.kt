@@ -32,4 +32,15 @@ class TerminalFontTest {
     @Test fun fittingNeverGrowsTheSize() {
         assertEquals(12.0, TerminalFont.fitting(80, 2400, 2, 12.0), 0.0)
     }
+
+    /** Measured with tput on a 1080 px phone: 65 columns at 10pt, 55 at 12. */
+    @Test fun countsColumnsLikeFoot() {
+        assertEquals(65, TerminalFont.columns(1080, 2, 10.0))
+        assertEquals(55, TerminalFont.columns(1080, 2, 12.0))
+    }
+
+    @Test fun textSizesStepTheEm() {
+        assertEquals(10.0, TerminalFont.pointSize(2.625f, 1f, 2, TerminalText.Smaller.em), 0.0)
+        assertEquals(14.0, TerminalFont.pointSize(2.625f, 1f, 2, TerminalText.Larger.em), 0.0)
+    }
 }

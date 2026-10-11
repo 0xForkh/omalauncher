@@ -71,7 +71,7 @@ class Runtime(
     val server = WaylandServer(proot.waylandSocket.path, wm).also { wm.server = it }
     val keyboard = KeyboardBridge(wm)
     val terminals = TerminalTiles(this)
-    val terminalFont = TerminalFont(proot)
+    val terminalFont = TerminalFont(context, proot)
     val linuxApps = mutableStateListOf<LinuxApp>()
 
     /** Icons of [linuxApps] by desktop id; apps without a PNG icon have no entry. */

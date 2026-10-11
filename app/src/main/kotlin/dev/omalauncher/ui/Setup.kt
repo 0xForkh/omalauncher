@@ -233,7 +233,7 @@ private fun ThemeDownloadProgress(
             style = Mono.copy(color = Palette.accent, fontSize = TextSize.Body),
         )
         BasicText(
-            "The theme's colors apply anyway. The launcher tries again later, or download them in settings › themes.",
+            "The theme's colors apply anyway. The launcher tries again later, or download them in settings › style.",
             Modifier.padding(top = 6.dp),
             style = Mono.copy(color = Subtle, fontSize = TextSize.Small, lineHeight = 16.sp),
         )

@@ -21,15 +21,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -45,6 +44,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.omalauncher.Runtime
+import dev.omalauncher.linux.LinuxState
+import dev.omalauncher.linux.TerminalFont
+import dev.omalauncher.linux.TerminalText
 import dev.omalauncher.theme.OmarchyTheme
 import dev.omalauncher.theme.ThemeDirs
 import dev.omalauncher.theme.ThemeDownload
@@ -55,14 +58,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-/** Omarchy's theme menu: pick a theme, then one of its backgrounds. */
+/**
+ * Omarchy's Style menu: the theme, its background, how the home screen
+ * draws itself and, with Linux, the terminal's text size.
+ */
 @Composable
-fun ThemePicker(
-    store: ThemeStore,
+fun StyleScreen(
+    runtime: Runtime,
     onDismiss: () -> Unit,
 ) {
+    val store = runtime.themes
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     // Themes added in Linux since the launcher started.
     LaunchedEffect(Unit) { if (store.loaded) store.rescan() }
     var browsing by remember { mutableStateOf(false) }
@@ -72,99 +78,26 @@ fun ThemePicker(
         ThemeCatalogScreen(store, onDismiss = { browsing = false })
         return
     }
-    OverlayPanel("themes", onDismiss) {
-        // Style choices don't depend on a theme, so they're offered before themes are downloaded too.
-        StyleOption("icons", listOf("monochrome", "colored"), if (LauncherStyle.monochromeIcons) 0 else 1) { store.setMonochromeIcons(it == 0) }
-        StyleOption("home apps", listOf("boxed", "icon only"), if (LauncherStyle.bareAppIcons) 1 else 0) { store.setBareAppIcons(it == 1) }
-        StyleOption("recent apps", listOf("shown", "hidden"), if (LauncherStyle.recentApps) 0 else 1) { store.setRecentApps(it == 0) }
-        StyleOption("corners", Corners.entries.map { it.label }, LauncherStyle.corners.ordinal) { store.setCorners(Corners.entries[it]) }
-        Spacer(Modifier.height(8.dp))
-        if (!store.complete) {
-            DownloadPrompt(store.download, partial = store.themes.isNotEmpty()) { scope.launch { store.ensureRelease() } }
-            if (store.themes.isEmpty()) return@OverlayPanel
-            Spacer(Modifier.height(8.dp))
-        }
-        val current = store.current
-        if (current != null) {
-            // Keyed on the background too, so an image just added shows up.
-            val backgrounds = remember(current, store.background) { current.backgrounds() }
-            val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-                if (uri != null) scope.launch { store.addBackground(uri) }
-            }
-            BasicText("background", Modifier.padding(vertical = 4.dp), style = Mono.copy(color = Palette.muted))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(backgrounds, key = { it.path }) { file ->
-                    Thumbnail(
-                        file,
-                        selected = file == store.background,
-                        modifier = Modifier.width(120.dp).aspectRatio(16f / 10f),
-                        onClick = { scope.launch { store.setBackground(file) } },
-                    )
-                }
-                // Omarchy's Install > Style > Background, with Android's image picker instead of a folder.
-                item(key = "add") {
-                    Box(
-                        Modifier
-                            .width(120.dp)
-                            .aspectRatio(16f / 10f)
-                            .frame(2.dp, Palette.border, Palette.surface, radius = 12.dp)
-                            .clickable { pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        BasicText("[ + image ]", style = Mono.copy(color = Palette.accent))
-                    }
-                }
-            }
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    // Some phones (Android Go) have no live wallpaper picker.
-                    .clickable(enabled = !store.liveWallpaperActive) { runCatching { context.startActivity(store.liveWallpaperIntent()) } }
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (store.liveWallpaperActive) {
-                    // SystemUI defers live-wallpaper color changes until the screen turns off.
-                    BasicText(
-                        "✓ android wallpaper & system colors follow the theme (system colors update after the screen turns off)",
-                        style = Mono.copy(color = Palette.green),
-                    )
-                } else {
-                    BasicText("[ use as android wallpaper + system colors ]", style = Mono.copy(color = Palette.accent))
-                }
-            }
-            if (current.own != null) {
-                val source = remember(current) { ThemeDirs.sourceOf(current) }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    BasicText(
-                        source?.label ?: "your own theme",
-                        Modifier.weight(1f),
-                        style = Mono.copy(color = Palette.muted),
-                        softWrap = false,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (source != null) BracketAction("update", Palette.accent) { scope.launch { store.update(current) } }
-                    BracketAction("remove", Palette.red) { removing = current }
-                }
-            }
-        }
-        LazyVerticalGrid(GridCells.Adaptive(150.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Column {
-                    Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        BasicText("theme", Modifier.weight(1f), style = Mono.copy(color = Palette.muted))
-                        BracketAction("browse", Palette.accent) { browsing = true }
-                        BracketAction("install", Palette.accent) {
-                            store.clearInstallError()
-                            installOpen = true
-                        }
-                    }
-                    InstallStatus(store)
-                }
-            }
-            items(store.themes, key = { it.name }) { theme ->
-                ThemeCard(theme, selected = theme.name == current?.name) { scope.launch { store.apply(theme) } }
-            }
+    val linux by runtime.bootstrap.state.collectAsState()
+    OverlayPanel("style", onDismiss) {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            ThemeSection(
+                store,
+                onBrowse = { browsing = true },
+                onInstall = {
+                    store.clearInstallError()
+                    installOpen = true
+                },
+                onRemove = { removing = it },
+            )
+            store.current?.let { BackgroundSection(store, it) }
+            // Style choices don't depend on a theme, so they're offered before themes are downloaded too.
+            SectionLabel("home screen")
+            StyleOption("icons", listOf("monochrome", "colored"), if (LauncherStyle.monochromeIcons) 0 else 1) { store.setMonochromeIcons(it == 0) }
+            StyleOption("home apps", listOf("boxed", "icon only"), if (LauncherStyle.bareAppIcons) 1 else 0) { store.setBareAppIcons(it == 1) }
+            StyleOption("recent apps", listOf("shown", "hidden"), if (LauncherStyle.recentApps) 0 else 1) { store.setRecentApps(it == 0) }
+            StyleOption("corners", Corners.entries.map { it.label }, LauncherStyle.corners.ordinal) { store.setCorners(Corners.entries[it]) }
+            if (linux == LinuxState.Installed) TerminalSection(runtime.terminalFont)
         }
         if (installOpen) {
             TextDialog(
@@ -192,6 +125,128 @@ fun ThemePicker(
         }
     }
 }
+
+/** The installed themes in a row, starting at the current one; browse has Omarchy's whole catalog. */
+@Composable
+private fun ThemeSection(
+    store: ThemeStore,
+    onBrowse: () -> Unit,
+    onInstall: () -> Unit,
+    onRemove: (OmarchyTheme) -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    val current = store.current
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        SectionLabel("theme", Modifier.weight(1f))
+        BracketAction("browse", Palette.accent, onBrowse)
+        BracketAction("install", Palette.accent, onInstall)
+    }
+    InstallStatus(store)
+    if (!store.complete) {
+        DownloadPrompt(store.download, partial = store.themes.isNotEmpty()) { scope.launch { store.ensureRelease() } }
+        Spacer(Modifier.height(8.dp))
+    }
+    if (store.themes.isNotEmpty()) {
+        val start = store.themes.indexOfFirst { it.name == current?.name }.coerceAtLeast(0)
+        LazyRow(state = rememberLazyListState(start), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(store.themes, key = { it.name }) { theme ->
+                ThemeCard(theme, selected = theme.name == current?.name, Modifier.width(160.dp)) { scope.launch { store.apply(theme) } }
+            }
+        }
+    }
+    if (current?.own != null) {
+        val source = remember(current) { ThemeDirs.sourceOf(current) }
+        Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            BasicText(
+                source?.label ?: "your own theme",
+                Modifier.weight(1f),
+                style = Mono.copy(color = Palette.muted),
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (source != null) BracketAction("update", Palette.accent) { scope.launch { store.update(current) } }
+            BracketAction("remove", Palette.red) { onRemove(current) }
+        }
+    }
+}
+
+/** [theme]'s backgrounds, one of the user's own images, and handing it all to Android. */
+@Composable
+private fun BackgroundSection(
+    store: ThemeStore,
+    theme: OmarchyTheme,
+) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    // Keyed on the background too, so an image just added shows up.
+    val backgrounds = remember(theme, store.background) { theme.backgrounds() }
+    val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) scope.launch { store.addBackground(uri) }
+    }
+    SectionLabel("background")
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(backgrounds, key = { it.path }) { file ->
+            Thumbnail(
+                file,
+                selected = file == store.background,
+                modifier = Modifier.width(120.dp).aspectRatio(16f / 10f),
+                onClick = { scope.launch { store.setBackground(file) } },
+            )
+        }
+        // Omarchy's Install > Style > Background, with Android's image picker instead of a folder.
+        item(key = "add") {
+            Box(
+                Modifier
+                    .width(120.dp)
+                    .aspectRatio(16f / 10f)
+                    .frame(2.dp, Palette.border, Palette.surface, radius = 12.dp)
+                    .clickable { pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                contentAlignment = Alignment.Center,
+            ) {
+                BasicText("[ + image ]", style = Mono.copy(color = Palette.accent))
+            }
+        }
+    }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            // Some phones (Android Go) have no live wallpaper picker.
+            .clickable(enabled = !store.liveWallpaperActive) { runCatching { context.startActivity(store.liveWallpaperIntent()) } }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (store.liveWallpaperActive) {
+            // SystemUI defers live-wallpaper color changes until the screen turns off.
+            BasicText(
+                "✓ android wallpaper & system colors follow the theme (system colors update after the screen turns off)",
+                style = Mono.copy(color = Palette.green),
+            )
+        } else {
+            BasicText("[ use as android wallpaper + system colors ]", style = Mono.copy(color = Palette.accent))
+        }
+    }
+}
+
+/** The size terminals open at, on top of Android's font size; see [TerminalFont]. */
+@Composable
+private fun TerminalSection(font: TerminalFont) {
+    SectionLabel("terminal")
+    StyleOption("text", TerminalText.entries.map { it.label }, font.text.ordinal) { font.select(TerminalText.entries[it]) }
+    // In portrait, where columns run short; landscape has plenty.
+    val metrics = LocalContext.current.resources.displayMetrics
+    val columns = font.columns(minOf(metrics.widthPixels, metrics.heightPixels))
+    BasicText(
+        "${TerminalFont.format(font.size).removeSuffix(".0")} pt · $columns columns in portrait · for terminals opened from now on",
+        Modifier.padding(start = 104.dp, top = 2.dp),
+        style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small),
+    )
+}
+
+@Composable
+private fun SectionLabel(
+    text: String,
+    modifier: Modifier = Modifier,
+) = BasicText(text, modifier.padding(top = 12.dp, bottom = 4.dp), style = Mono.copy(color = Palette.muted))
 
 /** A labeled segmented choice: the picked option fills with the accent color. */
 @Composable
@@ -254,11 +309,12 @@ private fun DownloadPrompt(
 private fun ThemeCard(
     theme: OmarchyTheme,
     selected: Boolean,
+    modifier: Modifier,
     onClick: () -> Unit,
 ) {
     val bg = theme.colors["background"].toColor()
     Column(
-        Modifier
+        modifier
             .frame(2.dp, if (selected) Palette.accent else Palette.border, bg, radius = 12.dp)
             .clickable(onClick = onClick),
     ) {

@@ -32,7 +32,7 @@ import dev.omalauncher.linux.LinuxState
 fun SettingsScreen(
     runtime: Runtime,
     onDismiss: () -> Unit,
-    onThemes: () -> Unit,
+    onStyle: () -> Unit,
     onAgents: () -> Unit,
     onPackages: () -> Unit,
     onStore: () -> Unit,
@@ -53,7 +53,7 @@ fun SettingsScreen(
             }
         val rows =
             listOf(
-                Triple("themes", runtime.themes.current?.title ?: "colors and backgrounds", onThemes),
+                Triple("style", runtime.themes.current?.title ?: "theme, background, home screen", onStyle),
                 Triple("linux", linuxStatus, onLinux),
                 if (installed) {
                     Triple("coding agents", runtime.agents.default?.let { "default: ${it.name}" } ?: "install Claude Code, OpenCode, …", onAgents)

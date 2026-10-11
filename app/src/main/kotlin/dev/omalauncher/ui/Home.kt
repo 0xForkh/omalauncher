@@ -88,7 +88,8 @@ fun HomeScreen(
     LaunchedEffect(engine) {
         engine.launcherAction = { action ->
             when (action) {
-                "themes" -> state.themesOpen = true
+                // "themes" from before the screen was style; widgets still send it.
+                "style", "themes" -> state.styleOpen = true
                 "agents" -> state.agentsOpen = true
                 "store" -> state.storeOpen = true
                 "linux" -> state.linuxOpen = true
