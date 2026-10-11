@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.LazyColumn
@@ -308,7 +307,8 @@ internal fun AppPanel(
         }
 
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-        Column(Modifier.widthIn(max = 640.dp).fillMaxSize()) {
+        // Full width: a wide screen fits more icons in each row rather than leaving the sides empty.
+        Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().padding(top = 12.dp, start = 12.dp, end = 12.dp), horizontalArrangement = Arrangement.End) {
                 Box(
                     Modifier
