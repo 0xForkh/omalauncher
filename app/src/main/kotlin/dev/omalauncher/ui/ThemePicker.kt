@@ -1,5 +1,8 @@
 package dev.omalauncher.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -80,7 +83,11 @@ fun ThemePicker(
         }
         val current = store.current
         if (current != null) {
-            val backgrounds = remember(current) { current.backgrounds() }
+            // Keyed on the background too, so an image just added shows up.
+            val backgrounds = remember(current, store.background) { current.backgrounds() }
+            val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+                if (uri != null) scope.launch { store.addBackground(uri) }
+            }
             BasicText("background", Modifier.padding(vertical = 4.dp), style = Mono.copy(color = Palette.muted))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(backgrounds, key = { it.path }) { file ->
@@ -90,6 +97,19 @@ fun ThemePicker(
                         modifier = Modifier.width(120.dp).aspectRatio(16f / 10f),
                         onClick = { scope.launch { store.setBackground(file) } },
                     )
+                }
+                // Omarchy's Install > Style > Background, with Android's image picker instead of a folder.
+                item(key = "add") {
+                    Box(
+                        Modifier
+                            .width(120.dp)
+                            .aspectRatio(16f / 10f)
+                            .frame(2.dp, Palette.border, Palette.surface, radius = 12.dp)
+                            .clickable { pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        BasicText("[ + image ]", style = Mono.copy(color = Palette.accent))
+                    }
                 }
             }
             Row(
