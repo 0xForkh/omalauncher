@@ -228,7 +228,7 @@ private fun BackgroundSection(
 /** The terminals' font and the size they open at, on top of Android's font size; see [TerminalFont]. */
 @Composable
 private fun TerminalSection(font: TerminalFont) {
-    LaunchedEffect(Unit) { font.familiesLoaded(withContext(Dispatchers.IO) { font.loadFamilies() }) }
+    LaunchedEffect(Unit) { font.refreshFamilies() }
     SectionLabel("terminal")
     FontOption(font.families, font.family, font::select)
     BasicText(
