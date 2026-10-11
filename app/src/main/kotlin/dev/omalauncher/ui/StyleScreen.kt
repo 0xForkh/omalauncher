@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -146,7 +147,13 @@ private fun ThemeSection(
     }
     if (store.themes.isNotEmpty()) {
         val start = store.themes.indexOfFirst { it.name == current?.name }.coerceAtLeast(0)
-        LazyRow(state = rememberLazyListState(start), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyRow(
+            // Scrolls under the panel's padding to its frame, starting aligned with the heading.
+            Modifier.bleed(PanelPadding),
+            state = rememberLazyListState(start),
+            contentPadding = PaddingValues(horizontal = PanelPadding),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             items(store.themes, key = { it.name }) { theme ->
                 ThemeCard(theme, selected = theme.name == current?.name, Modifier.width(160.dp)) { scope.launch { store.apply(theme) } }
             }
@@ -182,7 +189,7 @@ private fun BackgroundSection(
         if (uri != null) scope.launch { store.addBackground(uri) }
     }
     Heading("background")
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyRow(Modifier.bleed(PanelPadding), contentPadding = PaddingValues(horizontal = PanelPadding), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(backgrounds, key = { it.path }) { file ->
             Thumbnail(
                 file,
