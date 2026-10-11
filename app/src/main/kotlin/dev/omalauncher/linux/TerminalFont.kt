@@ -15,7 +15,9 @@ import kotlin.math.roundToInt
  * The size foot draws text at. foot.ini includes [PATH] rather than fixing a
  * size, so every foot (opened from the launcher or from a shell) follows the
  * screen's density and Android's font size, as the launcher's own text does,
- * in the user's [text] size: more columns or bigger letters. Main thread.
+ * in the user's [text] size: more columns or bigger letters. foot reads it
+ * as it starts; one already open catches up when it's shown again, with its
+ * own zoom keys (see Runtime). Main thread.
  */
 class TerminalFont(
     context: Context,
@@ -42,8 +44,7 @@ class TerminalFont(
 
     /**
      * Android's display metrics and font size; [scale] is the integer
-     * wl_output scale foot multiplies point sizes by. Terminals opened from
-     * now on get the new size.
+     * wl_output scale foot multiplies point sizes by.
      */
     fun update(
         density: Float,
@@ -87,6 +88,9 @@ class TerminalFont(
 
         /** The family foot.ini's font always was; an override (`-o main.font=`) must name it too. */
         const val FAMILY = "JetBrains Mono"
+
+        /** foot's font-size-adjustment: what its Ctrl+= and Ctrl+- change the size by, in points. */
+        const val STEP = 0.5
 
         /** foot's pixels per point at scale 1 (96 dpi, without dpi-aware). */
         private const val PX_PER_PT = 96f / 72f

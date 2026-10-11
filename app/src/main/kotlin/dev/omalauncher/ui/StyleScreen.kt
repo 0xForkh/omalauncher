@@ -236,7 +236,7 @@ private fun TerminalSection(font: TerminalFont) {
     val metrics = LocalContext.current.resources.displayMetrics
     val columns = font.columns(minOf(metrics.widthPixels, metrics.heightPixels))
     BasicText(
-        "${TerminalFont.format(font.size).removeSuffix(".0")} pt · $columns columns in portrait · for terminals opened from now on",
+        "${TerminalFont.format(font.size).removeSuffix(".0")} pt · $columns columns in portrait",
         Modifier.padding(start = 104.dp, top = 2.dp),
         style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small),
     )

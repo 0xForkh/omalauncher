@@ -76,6 +76,9 @@ class TerminalTiles(
         wm.release = { window -> sessions.firstOrNull { it.window === window }?.detach() }
     }
 
+    /** Whether [appId] is a tile's terminal at a size of the widget's own, which foot.ini's doesn't change. */
+    fun hasOwnFont(appId: String) = sessions.any { it.appId == appId && it.fontSize != null }
+
     /** The tile that has the keyboard, if any. */
     val active: EmbeddedTerminal?
         get() {
@@ -86,7 +89,7 @@ class TerminalTiles(
     fun create(
         command: String?,
         fontSize: Double?,
-    ): EmbeddedTerminal = EmbeddedTerminal(this, "omarchy.tile-${nextId++}", command, fontSize).also { sessions += it }
+    ): EmbeddedTerminal = EmbeddedTerminal(this, "$APP_ID_PREFIX${nextId++}", command, fontSize).also { sessions += it }
 
     internal fun forget(term: EmbeddedTerminal) {
         sessions -= term
@@ -158,6 +161,9 @@ class TerminalTiles(
     internal val windowManager get() = wm
 
     companion object {
+        /** Tiles' foot app_ids, numbered on. */
+        const val APP_ID_PREFIX = "omarchy.tile-"
+
         /** foot.ini's font (see GuestThemeConfig); an override must name the family too. */
         private const val FONT = "JetBrains Mono"
     }

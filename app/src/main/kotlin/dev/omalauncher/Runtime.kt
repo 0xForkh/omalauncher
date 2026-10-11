@@ -56,8 +56,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
+import kotlin.math.roundToInt
 
 /**
  * Process-wide state: the launcher (themes, widgets, Android apps) and the
@@ -145,6 +147,17 @@ class Runtime(
                 KeyEvent.KEYCODE_ENTER -> true.also { terminal(null, "Terminal") }
                 KeyEvent.KEYCODE_W -> wm.focused?.let { wm.close(it) } != null
                 else -> false
+            }
+        }
+        // A terminal shown again after the text size changed catches up, with foot's own zoom keys.
+        wm.created = { window -> if (followsTerminalFont(window.appId)) terminalSizes[window] = terminalFont.size }
+        wm.focusGained = { window ->
+            terminalSizes[window]?.let { shown ->
+                val steps = ((terminalFont.size - shown) / TerminalFont.STEP).roundToInt()
+                if (steps != 0) {
+                    wm.zoom(window, steps)
+                    terminalSizes[window] = shown + steps * TerminalFont.STEP
+                }
             }
         }
         wm.openAppWindow = { handle ->
@@ -406,6 +419,21 @@ class Runtime(
     /** Wayland app_id -> the agent running in it, for sessions not named after their agent ("New app"). */
     private val launchedAgents = ConcurrentHashMap<String, Agent>()
 
+    /** App ids of terminals [terminal] opened at a size of their own (btop), which the text size doesn't change. */
+    private val ownFont = HashSet<String>()
+
+    /** The size each open terminal that follows the text size is at; see [TerminalFont]. */
+    private val terminalSizes = WeakHashMap<XdgToplevel, Double>()
+
+    /** Whether a window's foot takes its size from foot.ini, as its own terminals, plain foot and most tiles do. */
+    private fun followsTerminalFont(appId: String) =
+        when {
+            appId == "foot" -> true
+            launchedNames.containsKey(appId) -> appId !in ownFont
+            appId.startsWith(TerminalTiles.APP_ID_PREFIX) -> !terminals.hasOwnFont(appId)
+            else -> false
+        }
+
     /**
      * Opens [command] (or a shell) in a terminal named [name]. Each gets its own
      * foot app_id, so Recents shows "Grok" or "btop" rather than one "foot" per window.
@@ -426,7 +454,9 @@ class Runtime(
         launchedNames[appId] = name
         if (agent != null) launchedAgents[appId] = agent
         val args = command?.let { " -e bash -c " + shellQuote(it) }.orEmpty()
-        launch("foot --app-id=$appId${fontFor(command)}$args")
+        val font = fontFor(command)
+        if (font.isEmpty()) ownFont -= appId else ownFont += appId
+        launch("foot --app-id=$appId$font$args")
     }
 
     /**
