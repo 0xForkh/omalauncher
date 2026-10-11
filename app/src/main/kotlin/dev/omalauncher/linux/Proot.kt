@@ -143,6 +143,11 @@ class Proot(
                 // (--link2symlink) those become symlinks into the store, and `mise cache clear` after installs and
                 // updates then breaks them (Grok: "no platform binary installed"). npm copies the files.
                 "MISE_NPM_PACKAGE_MANAGER=npm",
+                // Coding agents come from mise and update with the system (SystemUpdates); updating themselves
+                // too would bypass that and leave a second copy on a phone that's short on storage.
+                "DISABLE_AUTOUPDATER=1",
+                "OPENCODE_DISABLE_AUTOUPDATE=1",
+                "GROK_DISABLE_AUTOUPDATER=1",
                 "BROWSER=xdg-open",
                 // micro takes taps and scrolling; yazi and git open files with it.
                 "EDITOR=micro",
