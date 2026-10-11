@@ -184,7 +184,7 @@ private fun DesktopScreen(
                 .fillMaxSize()
                 .safePadding()
                 .imePadding()
-                .then(if (side != null) Modifier.wrapContentWidth().widthIn(max = 640.dp) else Modifier),
+                .then(if (side != null) Modifier.wrapContentWidth().widthIn(max = ReadingWidth) else Modifier),
         ) {
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 if (panelShown) {
