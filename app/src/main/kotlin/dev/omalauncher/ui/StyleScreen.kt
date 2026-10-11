@@ -67,24 +67,21 @@ import java.io.File
 fun StyleScreen(
     runtime: Runtime,
     onDismiss: () -> Unit,
+    /** Opens the community themes over this screen. */
+    onBrowse: () -> Unit,
 ) {
     val store = runtime.themes
     val scope = rememberCoroutineScope()
     // Themes added in Linux since the launcher started.
     LaunchedEffect(Unit) { if (store.loaded) store.rescan() }
-    var browsing by remember { mutableStateOf(false) }
     var installOpen by remember { mutableStateOf(false) }
     var removing by remember { mutableStateOf<OmarchyTheme?>(null) }
-    if (browsing) {
-        ThemeCatalogScreen(store, onDismiss = { browsing = false })
-        return
-    }
     val linux by runtime.bootstrap.state.collectAsState()
     OverlayPanel("style", onDismiss) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             ThemeSection(
                 store,
-                onBrowse = { browsing = true },
+                onBrowse = onBrowse,
                 onInstall = {
                     store.clearInstallError()
                     installOpen = true

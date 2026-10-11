@@ -243,7 +243,7 @@ private fun ThemesOverlay(
         )
     }
     if (state.packagesOpen) PackagesScreen(runtime, onDismiss = { state.packagesOpen = false })
-    if (state.styleOpen) StyleScreen(runtime, onDismiss = { state.styleOpen = false })
+    if (state.styleOpen) StyleScreen(runtime, onDismiss = { state.styleOpen = false }, onBrowse = { state.themeBrowserOpen = true })
     if (state.themeBrowserOpen) ThemeCatalogScreen(runtime.themes, onDismiss = { state.themeBrowserOpen = false })
     if (state.storeOpen) StoreScreen(runtime.widgets, runtime.agents.installed, state.currentPage, runtime.themes.picked, onDismiss = { state.storeOpen = false })
     if (state.licensesOpen) LicensesScreen(onDismiss = { state.licensesOpen = false })
