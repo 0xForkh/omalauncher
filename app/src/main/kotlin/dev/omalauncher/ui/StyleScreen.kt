@@ -54,7 +54,6 @@ import dev.omalauncher.linux.TerminalText
 import dev.omalauncher.theme.OmarchyTheme
 import dev.omalauncher.theme.ThemeDirs
 import dev.omalauncher.theme.ThemeDownload
-import dev.omalauncher.theme.ThemeInstall
 import dev.omalauncher.theme.ThemeStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -74,8 +73,7 @@ fun StyleScreen(
 ) {
     val store = runtime.themes
     val scope = rememberCoroutineScope()
-    // Themes added in Linux since the launcher started.
-    LaunchedEffect(Unit) { if (store.loaded) store.rescan() }
+    RescanThemes(store)
     var installOpen by remember { mutableStateOf(false) }
     var removing by remember { mutableStateOf<OmarchyTheme?>(null) }
     val linux by runtime.bootstrap.state.collectAsState()
@@ -392,13 +390,3 @@ private fun Thumbnail(
 }
 
 private fun String?.toColor(): Color = hexColor(this) ?: Color.Gray
-
-/** How installing a theme from its repo is going; tapping a failure clears it. Nothing while idle. */
-@Composable
-internal fun InstallStatus(store: ThemeStore) {
-    when (val state = store.installing) {
-        is ThemeInstall.Running -> BasicText("installing ${state.name}… ${state.megabytes} MB", style = Mono.copy(color = Palette.accent))
-        is ThemeInstall.Failed -> BasicText("install failed: ${state.message}", Modifier.clickable { store.clearInstallError() }, style = Mono.copy(color = Palette.red))
-        ThemeInstall.Idle -> {}
-    }
-}

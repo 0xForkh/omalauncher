@@ -447,8 +447,7 @@ internal fun ThemeStrip(
     onPick: (BundledTheme) -> Unit = themes::pick,
     onBrowse: (() -> Unit)? = null,
 ) {
-    // Themes added in Linux since the launcher started.
-    LaunchedEffect(Unit) { if (themes.loaded) themes.rescan() }
+    RescanThemes(themes)
     val list = themes.choices
     if (list.isEmpty()) return
     Column {
