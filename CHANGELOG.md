@@ -11,6 +11,7 @@ Dates are when the build was uploaded to Play.
 - Cloned apps carry the clone mark instead of the briefcase, from Android 15 on.
 - With a work profile, the drawer splits into personal and work tabs; swipe sideways to switch.
 - The work tab pauses work apps and turns them back on.
+- Widget screens can raise the keyboard as they open, with `Input { focus: true }`.
 
 ## 0.5.0 (versionCode 10) – 2026-10-11
 
