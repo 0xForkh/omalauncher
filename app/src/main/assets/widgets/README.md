@@ -77,7 +77,7 @@ that read it redraw. Properties are separated by newlines or `;`.
 | `asset logo = base64"iVBOR..."` | an embedded image (under 2 MB) for `Image { src: logo }`, so the widget is one self-contained file |
 | `requires { pacman: ["jq", "curl"] }` | packages the widget's commands need; see Dependencies |
 | `meta { description: "..."; version: "1.0"; license: "MIT"; category: "news" }` | needed to publish to the widget store (see Sharing) |
-| `meta { owl: 6 }` | the language version the widget needs (this launcher has 6; the default is 1). Older launchers say "update the launcher" instead of failing on what they don't know. `Terminal` needs 2, `sprite` 3, triggers, `file`, `Slider`, `Input`, `android.notifications`, `android.volume`, `volume` and `notification` need 4, and `screen { }`, `screen()`, `close()`, `screenWidth` and `screenHeight` need 5, and `Input`'s `focus` 6; using them without declaring it is an error |
+| `meta { owl: 6 }` | the language version the widget needs (this launcher has 6; the default is 1). Older launchers say "update the launcher" instead of failing on what they don't know. `Terminal` needs 2, `sprite` 3, triggers, `file`, `Slider`, `Input`, `android.notifications`, `android.volume`, `volume` and `notification` need 4, and `screen { }`, `screen()`, `close()`, `screenWidth` and `screenHeight` need 5, and `Input`'s `focus`, `sh()` and `corners` 6; using them without declaring it is an error |
 | `onTap: ...` | runs when the tile (not a button inside it) is tapped |
 | `screen { ... }` | a full-screen view of the widget, opened with `screen()`; see Screens (owl 5) |
 | `every 10s { ... }`, `at t { ... }`, `when c { ... }`, `on x { ... }` | statements that run without a tap; see Triggers |
@@ -166,6 +166,13 @@ tile, so a widget can pick a layout to fit (`if cols < 3 { ... } else { ... }`).
 `null` for a moment before the tile is laid out. A widget's own declaration named
 `rows` or `cols` takes precedence.
 
+`corners` is the user's corner style as a multiplier, not a radius: 0 (edge, square), 0.5
+(soft) or 1 (round). Multiply the radius a shape would have on round by it: `radius: 8 *
+corners` for cards and album art, `3 * corners` for small chips, and the same in Canvas
+(`rect(x, y, w, h, radius: 8 * corners)`). The tile, buttons and bordered elements without a
+`radius` follow it on their own; a fixed `radius`, a clipped Box, an Image or a Canvas shape
+doesn't. It needs `meta { owl: 6 }`.
+
 ## Nodes
 
 `Name { prop: value; ...children }`. Structure: `if cond { } else { }`,
@@ -197,7 +204,8 @@ Every node also takes:
 - `width height size` (dp), `fill: true/width/height`, `weight` (share of the
   space left in a Row or Column), `padding` (`8`, `[h, v]` or `[l, t, r, b]`)
 - `background`, `border` (dp), `borderColor`, `radius`, `clip: true`
-  (without `radius`, bordered elements follow the launcher's corner style: 0 for edge, 4 for soft, 8 for round)
+  (without `radius`, bordered elements follow the launcher's corner style: 0 for edge, 4 for soft, 8 for round;
+  anything else matches it with `radius: 8 * corners`)
 - `opacity`, `rotation` (degrees), `scale`, `offset: [x, y]` (dp), `visible`
 - handlers: `onTap` (with `x`, `y`) and `onDrag` (with `dx`, `dy`, `x`, `y`); `Slider` and `Input` also take
   `onChange`, and `Input` `onSubmit`, both with `value`. Long-press

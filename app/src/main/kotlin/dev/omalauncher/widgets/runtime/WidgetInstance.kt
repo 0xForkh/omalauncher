@@ -22,6 +22,7 @@ import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.graphics.toArgb
 import dev.omalauncher.linux.ShellResult
 import dev.omalauncher.ui.EmbeddedTerminal
+import dev.omalauncher.ui.LauncherStyle
 import dev.omalauncher.ui.Palette
 import dev.omalauncher.widgets.lang.Budget
 import dev.omalauncher.widgets.lang.Env
@@ -270,6 +271,7 @@ class WidgetInstance(
         val v =
             when (name) {
                 "linux" -> return bool(linux())
+                "corners" -> return Num(LauncherStyle.corners.scale.toDouble())
                 "screenWidth" -> screenSize.value[0]
                 "screenHeight" -> screenSize.value[1]
                 "cols" -> tileSize.value[0]

@@ -373,6 +373,16 @@ class LangTest {
         assertEquals("2", text("len(rows)", "state rows = [1, 2]"))
     }
 
+    @Test fun cornersFollowTheLauncherStyle() {
+        val soft =
+            object : Host by TestHost(0) {
+                override fun tile(name: String): Value = if (name == "corners") Num(0.5) else Null
+            }
+        val p = Compiler.compile("widget {\n meta { owl: 6 }\n Text { text: \"${'$'}{8 * corners}\" } }")
+        assertEquals("4", (p.root.single() as WNode.Element).props["text"]!!(Env.root(soft)).text())
+        assertTrue(compileError("widget {\n meta { owl: 5 }\n Text { text: corners } }").contains("corners needs owl 6"))
+    }
+
     @Test fun requiresDeclaresPackagesPerManager() {
         val p = Compiler.compile("widget {\n  requires { pacman: [\"jq\", \"curl\"] }\n  requires { pacman: \"jq\" }\n  Text { text: \"x\" }\n}")
         assertEquals(mapOf("pacman" to listOf("jq", "curl")), p.requires)

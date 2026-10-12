@@ -103,8 +103,8 @@ class Compiler private constructor(
                 listOf("Slider", "Input", "file", "android.notifications", "android.volume", "volume", "notification", "every", "at", "when", "on").associateWith { 4 } +
                 // owl 5: a full-screen view of the widget.
                 listOf("screen", "close", "screenWidth", "screenHeight", "optional", "linux", "android.system").associateWith { 5 } +
-                // owl 6: properties, named Node.property; values in commands, quoted.
-                mapOf("Input.focus" to 6, "sh" to 6)
+                // owl 6: properties, named Node.property; values in commands, quoted; the launcher's corner style.
+                listOf("Input.focus", "sh", "corners").associateWith { 6 }
 
         // No onLongPress: long-press belongs to the home screen, which lifts the tile to move it.
         /**
@@ -136,7 +136,7 @@ class Compiler private constructor(
         val NOTIFICATION = setOf("open", "dismiss")
 
         /** The tile's size, readable anywhere a declaration of the same name doesn't shadow it. */
-        val TILE = setOf("cols", "rows", "tileWidth", "tileHeight", "screenWidth", "screenHeight")
+        val TILE = setOf("cols", "rows", "tileWidth", "tileHeight", "screenWidth", "screenHeight", "corners")
 
         /** Whether Linux is installed and running, for widgets with `optional` sources. Shadowable like [TILE]. */
         const val LINUX = "linux"
