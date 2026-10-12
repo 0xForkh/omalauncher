@@ -116,12 +116,6 @@ class LauncherState {
     ) = composeScope?.launch { drawer.animateTo(target, spring(stiffness = stiffness)) }
         ?: scope.launch { drawer.snapTo(target) }
 
-    /**
-     * Whether the drawer raises the keyboard as it opens. A swipe set to the plain app drawer opens it without;
-     * everything else (the bar, Super+Space, a widget) opens it to type, and closing it resets that.
-     */
-    var keyboardOnOpen = true
-
     fun open() = animate(1f, Spring.StiffnessMediumLow)
 
     fun close() = animate(0f, Spring.StiffnessMedium)

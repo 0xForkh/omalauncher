@@ -117,12 +117,7 @@ private fun DesktopScreen(
     // Only whether it shows is read here; the animation itself runs in the layer, without recomposing.
     val panelShown by remember(state) { derivedStateOf { state.drawer.value > 0.01f } }
     // Closing it forgets the search, like stock drawers: the next swipe up shows every app, not the old results.
-    LaunchedEffect(panelShown) {
-        if (!panelShown) {
-            state.query = ""
-            state.keyboardOnOpen = true
-        }
-    }
+    LaunchedEffect(panelShown) { if (!panelShown) state.query = "" }
     val search by remember(runtime, state) { derivedStateOf { searchApps(runtime, state.query) } }
     val highlighted = search.highlighted(state.picked)
 

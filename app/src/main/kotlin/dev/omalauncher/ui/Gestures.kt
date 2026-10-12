@@ -6,14 +6,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -25,28 +26,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import dev.omalauncher.Runtime
-import dev.omalauncher.linux.LinuxState
 
 /** What a gesture on home does. */
 enum class GestureAction(
     /** Saved in preferences: never rename. */
     val id: String,
     val label: String,
-    val description: String,
 ) {
-    Search("search", "search", "the app drawer with the keyboard up, to type right away"),
-    Drawer("drawer", "app drawer", "the app drawer; tap the bar to type"),
-    Settings("settings", "settings", "this settings screen"),
-    Style("style", "style", "theme, background and home screen"),
-    Store("store", "widget store", "add widgets to the home screen"),
-    Agents("agents", "coding agents", "install and pick agents; with no Linux, the Linux screen"),
-    None("none", "nothing", "the swipe does nothing"),
+    Drawer("drawer", "app drawer"),
+    None("none", "nothing"),
     ;
-
-    /** Opens the drawer under the finger rather than once the swipe is done. */
-    val opensDrawer get() = this == Search || this == Drawer
 
     companion object {
         fun of(id: String?) = entries.firstOrNull { it.id == id }
@@ -59,9 +57,9 @@ class Gestures(
 ) {
     private val prefs = context.getSharedPreferences("launcher", Context.MODE_PRIVATE)
 
-    private var up by mutableStateOf(GestureAction.of(prefs.getString(SWIPE_UP, null)) ?: GestureAction.Search)
+    private var up by mutableStateOf(GestureAction.of(prefs.getString(SWIPE_UP, null)) ?: GestureAction.Drawer)
 
-    /** Search by default: the drawer opened with the keyboard, as it always did. Saved as it's set. */
+    /** The app drawer by default, like stock launchers. Saved as it's set. */
     var swipeUp: GestureAction
         get() = up
         set(action) {
@@ -74,51 +72,28 @@ class Gestures(
     }
 }
 
-/** Runs [action] from a gesture; screens that need Linux offer to install it instead. */
-internal fun LauncherState.perform(
-    action: GestureAction,
-    runtime: Runtime,
-) {
-    when (action) {
-        GestureAction.Search, GestureAction.Drawer -> {
-            keyboardOnOpen = action == GestureAction.Search
-            open()
-        }
-        GestureAction.Settings -> settingsOpen = true
-        GestureAction.Style -> styleOpen = true
-        GestureAction.Store -> storeOpen = true
-        GestureAction.Agents -> if (runtime.bootstrap.state.value == LinuxState.Installed) agentsOpen = true else linuxOpen = true
-        GestureAction.None -> {}
-    }
-}
-
 /**
  * Dragging up opens the drawer under the finger and dragging down closes it, as on stock launchers: the panel
  * follows the drag and a fling or how far it got decides where it settles. Scrollables inside (a widget's
- * list, the recent apps strip) take their own direction first. [keyboard] says whether a drawer opened by it
- * raises the keyboard.
+ * list, the recent apps strip) take their own direction first.
  */
 @Composable
 internal fun Modifier.drawerSwipe(
     state: LauncherState,
     enabled: Boolean = true,
-    keyboard: Boolean = true,
 ): Modifier {
     val screenHeight = with(LocalDensity.current) { LocalConfiguration.current.screenHeightDp.dp.toPx() }
     return draggable(
         orientation = Orientation.Vertical,
         enabled = enabled,
         state = rememberDraggableState { dy -> state.dragBy(-dy / screenHeight) },
-        // Only a drag that opens it decides; one that closes it leaves the keyboard to the bar.
-        onDragStarted = { if (state.drawer.value == 0f) state.keyboardOnOpen = keyboard },
         onDragStopped = { velocity -> state.settle(velocity) },
     )
 }
 
 /**
- * Swiping up on home (the pages, the recent apps strip, the bar) does what's picked in gesture settings. The
- * drawer follows the finger; any other action runs once the swipe is long or fast enough. With the drawer open,
- * the swipe drags it, whatever the setting, so it can still be pulled closed.
+ * Swiping up on home (the pages, the recent apps strip, the bar) does what's picked in gesture settings. With
+ * the drawer open, the swipe drags it whatever the setting, so it can still be pulled closed.
  */
 @Composable
 internal fun Modifier.homeSwipe(
@@ -126,30 +101,19 @@ internal fun Modifier.homeSwipe(
     state: LauncherState,
     enabled: Boolean = true,
 ): Modifier {
-    val action = runtime.gestures.swipeUp
     val drawerShown by remember(state) { derivedStateOf { state.drawer.value > 0f } }
-    if (action.opensDrawer || drawerShown) return drawerSwipe(state, enabled, keyboard = action != GestureAction.Drawer)
-    val threshold = with(LocalDensity.current) { SwipeAction.toPx() }
-    var dragged by remember { mutableStateOf(0f) }
-    return draggable(
-        orientation = Orientation.Vertical,
-        enabled = enabled && action != GestureAction.None,
-        state = rememberDraggableState { dy -> dragged += dy },
-        onDragStarted = { dragged = 0f },
-        onDragStopped = { velocity ->
-            // Up far enough, or flung up without coming back down.
-            if (dragged < -threshold || (velocity < -FlingVelocity && dragged < 0f)) state.perform(action, runtime)
-        },
-    )
+    // Whether the drawer shows is only read when it matters: read here, it would recompose all of home (its Box is
+    // inline) each time the drawer opens or closes.
+    val drags =
+        when (runtime.gestures.swipeUp) {
+            GestureAction.Drawer -> true
+            GestureAction.None -> drawerShown
+        }
+    // One drag handler, only turned on or off: a new one mid-swipe (as the drawer starts to show) would drop the drag.
+    return drawerSwipe(state, enabled && drags)
 }
 
-/** How far a swipe up goes before it runs an action that isn't the drawer. */
-private val SwipeAction = 96.dp
-
-/** px/s: a flick this fast counts however short it was, as [LauncherState.settle] counts one for the drawer. */
-private const val FlingVelocity = 800f
-
-/** Gesture settings: what swiping up on home does. */
+/** Gesture settings: what swiping up on home does, picked from a dropdown. */
 @Composable
 fun GesturesScreen(
     runtime: Runtime,
@@ -157,26 +121,76 @@ fun GesturesScreen(
 ) {
     val gestures = runtime.gestures
     OverlayPanel("gestures", onDismiss, contentWidth = ReadingWidth) {
-        Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SectionLabel("swipe up on home")
-            for (action in GestureAction.entries) {
-                val picked = action == gestures.swipeUp
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(LauncherStyle.shape(12.dp))
-                        .background(Palette.surface)
-                        .clickable { gestures.swipeUp = action }
-                        .padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+        GestureRow("swipe up", gestures.swipeUp) { gestures.swipeUp = it }
+    }
+}
+
+/** A gesture and the action it runs; tapping the action lists the others under it. */
+@Composable
+private fun GestureRow(
+    label: String,
+    action: GestureAction,
+    onPick: (GestureAction) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(LauncherStyle.shape(12.dp))
+            .background(Palette.surface)
+            .clickable { open = !open }
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BasicText(label, Modifier.weight(1f), style = Mono.copy(fontSize = TextSize.Item))
+        Box {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                BasicText(action.label, style = Mono.copy(color = Palette.accent, fontSize = TextSize.Item))
+                Symbol(if (open) Glyph.ChevronUp else Glyph.ChevronDown, Palette.muted, Modifier.padding(start = 4.dp))
+            }
+            if (open) {
+                Popup(
+                    popupPositionProvider = BelowAnchorEnd,
+                    onDismissRequest = { open = false },
+                    properties = PopupProperties(focusable = true),
                 ) {
-                    Column(Modifier.weight(1f)) {
-                        BasicText(action.label, style = Mono.copy(color = if (picked) Palette.accent else Palette.foreground, fontSize = TextSize.Item))
-                        BasicText(action.description, style = Mono.copy(color = Palette.muted, fontSize = TextSize.Small))
+                    Column(
+                        Modifier
+                            .width(IntrinsicSize.Max)
+                            .widthIn(min = 180.dp)
+                            .frame(2.dp, Palette.accent, Palette.background)
+                            .padding(4.dp),
+                    ) {
+                        for (option in GestureAction.entries) {
+                            val current = option == action
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onPick(option)
+                                        open = false
+                                    }.padding(horizontal = 10.dp, vertical = 10.dp),
+                            ) {
+                                BasicText(if (current) "● " else "  ", style = Mono.copy(color = Palette.accent))
+                                BasicText(option.label, style = Mono.copy(color = if (current) Palette.accent else Palette.foreground))
+                            }
+                        }
                     }
-                    if (picked) Symbol(Glyph.Check, Palette.accent, fontSize = TextSize.Title)
                 }
             }
         }
     }
+}
+
+/** Just under the anchor, lined up with its end, and kept on screen. */
+private object BelowAnchorEnd : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ) = IntOffset(
+        (anchorBounds.right - popupContentSize.width).coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0)),
+        (anchorBounds.bottom + 8).coerceAtMost((windowSize.height - popupContentSize.height).coerceAtLeast(0)),
+    )
 }
