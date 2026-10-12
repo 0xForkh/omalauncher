@@ -2,7 +2,7 @@
 # Builds proot from Termux's source with our patches (patches/proot) and downloads Termux's prebuilt
 # aarch64 runtime deps, placing them in app/src/main/jniLibs/arm64-v8a as lib*.so so Android
 # extracts them into nativeLibraryDir, the only place an app targeting API 29+ may exec from.
-# Needs the Android NDK (NDK_VERSION below, or ANDROID_NDK_HOME) and bsdtar.
+# Needs the Android NDK (NDK_VERSION below, in the SDK at ANDROID_HOME or local.properties) and bsdtar.
 set -euo pipefail
 
 REPO=https://packages.termux.dev/apt/termux-main
@@ -19,7 +19,8 @@ trap 'rm -rf "$WORK"' EXIT
 PROOT=5.1.107.96
 TALLOC=2.5.0
 SHMEM=0.7
-NDK_VERSION=30.0.14904198
+# The NDK Termux builds proot with (its clang version string), and one GitHub's Ubuntu runners have.
+NDK_VERSION=30.0.16248370
 
 fetch() {
   local pkg=$1 file=$2 sha=$3
@@ -51,7 +52,8 @@ for p in "$ROOT"/patches/proot/*.patch; do
 done
 
 SDK="${ANDROID_HOME:-$(sed -n 's/^sdk\.dir=//p' "$ROOT/local.properties" 2>/dev/null)}"
-NDK="${ANDROID_NDK_HOME:-$SDK/ndk/$NDK_VERSION}"
+# Not ANDROID_NDK_HOME: CI runners point it at an older default NDK.
+NDK="$SDK/ndk/$NDK_VERSION"
 [ -d "$NDK" ] || { echo "no NDK at $NDK; install ndk;$NDK_VERSION with sdkmanager" >&2; exit 1; }
 TC="$(echo "$NDK"/toolchains/llvm/prebuilt/*/bin)"
 
@@ -68,14 +70,25 @@ echo "building proot"
 # scripts/build/toolchain/termux_setup_toolchain_30.sh). The loader path compiled in is never used:
 # the app always sets PROOT_LOADER (linux/Proot.kt). Newer clang makes implicit declarations an
 # error, and ashmem_memfd.c leans on them.
-CFLAGS="-fstack-protector-strong -Oz -Wno-error=implicit-function-declaration" \
-  CPPFLAGS="-I$DEPS/include -DARG_MAX=131072 -DVERSION=\\\"$PROOT\\\"" \
-  LDFLAGS="-L$DEPS/lib -Wl,--as-needed -Wl,-z,relro,-z,now" \
-  PROOT_UNBUNDLE_LOADER=/unused \
-  make -C "$SRC/src" -j"$(getconf _NPROCESSORS_ONLN)" PROOT_WITH_LIBANDROID_SHMEM=true \
-  CC="$TC/aarch64-linux-android29-clang" LD="$TC/aarch64-linux-android29-clang" \
-  STRIP="$TC/llvm-strip" OBJCOPY="$TC/llvm-objcopy" OBJDUMP="$TC/llvm-objdump" \
-  proot >"$WORK/build.log" 2>&1 || { tail -30 "$WORK/build.log" >&2; exit 1; }
+build() {
+  CFLAGS="-fstack-protector-strong -Oz -Wno-error=implicit-function-declaration" \
+    CPPFLAGS="-I$DEPS/include -DARG_MAX=131072 -DVERSION=\\\"$PROOT\\\"" \
+    LDFLAGS="-L$DEPS/lib -Wl,--as-needed -Wl,-z,relro,-z,now" \
+    PROOT_UNBUNDLE_LOADER=/unused \
+    make -C "$SRC/src" -j"$(getconf _NPROCESSORS_ONLN)" PROOT_WITH_LIBANDROID_SHMEM=true \
+    CC="$TC/aarch64-linux-android29-clang" LD="$TC/aarch64-linux-android29-clang" \
+    STRIP="$TC/llvm-strip" OBJCOPY="$TC/llvm-objcopy" OBJDUMP="$TC/llvm-objdump" \
+    "$@" >>"$WORK/build.log" 2>&1 || { tail -30 "$WORK/build.log" >&2; exit 1; }
+}
+build loader/loader
+# proot jumps into the loader at pokedata_workaround on kernels whose PTRACE_POKEDATA fails. The
+# makefile finds the offset with the host's readelf and GNU awk (strtonum); without them it
+# silently writes 0, so compute it with the NDK's readelf instead.
+sym() { "$TC/llvm-readelf" -s "$SRC/src/loader/loader" | awk -v name="$1" '$8 == name { print $2 }'; }
+OFFSET=$(( 0x$(sym pokedata_workaround) - 0x$(sym _start) ))
+[ "$OFFSET" -gt 0 ] || { echo "can't find pokedata_workaround in the loader" >&2; exit 1; }
+printf '#include <unistd.h>\nconst ssize_t offset_to_pokedata_workaround=%d;\n' "$OFFSET" >"$SRC/src/loader/loader-info.c"
+build proot
 
 mkdir -p "$OUT"
 cp "$SRC/src/proot" "$OUT/libproot.so"
