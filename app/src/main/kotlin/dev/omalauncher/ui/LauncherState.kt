@@ -28,6 +28,7 @@ class LauncherState {
     var settingsOpen by mutableStateOf(false)
     var packagesOpen by mutableStateOf(false)
     var licensesOpen by mutableStateOf(false)
+    var gesturesOpen by mutableStateOf(false)
 
     /** The Linux sheet: install, progress, remove. Opened by anything that needs Linux. */
     var linuxOpen by mutableStateOf(false)
@@ -43,7 +44,7 @@ class LauncherState {
 
     /** The open drawer or a full-screen panel hides the home screen; animated widgets stop ticking under it. */
     val homeCovered: Boolean
-        get() = drawer.value > 0.99f || settingsOpen || styleOpen || themeBrowserOpen || agentsOpen || storeOpen || packagesOpen || linuxOpen || licensesOpen || shared != null || sharing != null
+        get() = drawer.value > 0.99f || settingsOpen || styleOpen || themeBrowserOpen || agentsOpen || storeOpen || packagesOpen || linuxOpen || licensesOpen || gesturesOpen || shared != null || sharing != null
 
     /** Closes every overlay screen (settings and what it opens). */
     fun closeScreens() {
@@ -54,6 +55,7 @@ class LauncherState {
         packagesOpen = false
         linuxOpen = false
         licensesOpen = false
+        gesturesOpen = false
         settingsOpen = false
         homeMenuOpen = false
         shared = null
@@ -113,6 +115,12 @@ class LauncherState {
         stiffness: Float,
     ) = composeScope?.launch { drawer.animateTo(target, spring(stiffness = stiffness)) }
         ?: scope.launch { drawer.snapTo(target) }
+
+    /**
+     * Whether the drawer raises the keyboard as it opens. A swipe set to the plain app drawer opens it without;
+     * everything else (the bar, Super+Space, a widget) opens it to type, and closing it resets that.
+     */
+    var keyboardOnOpen = true
 
     fun open() = animate(1f, Spring.StiffnessMediumLow)
 

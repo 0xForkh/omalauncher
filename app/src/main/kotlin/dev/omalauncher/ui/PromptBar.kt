@@ -1,6 +1,8 @@
 package dev.omalauncher.ui
 
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalConfiguration
+import android.content.res.Configuration
 import androidx.compose.runtime.setValue
 import android.Manifest
 import android.content.pm.PackageManager
@@ -203,11 +205,14 @@ internal fun PromptBar(
         state.promptRequest = null
     }
     // The panel and the bar open and close together: opening it (Super+Space, a widget) focuses the bar, closing it lets go.
+    // With a hardware keyboard the bar takes typing even when the drawer opened without the soft keyboard.
+    val configuration = LocalConfiguration.current
+    val hardKeyboard = configuration.keyboard == Configuration.KEYBOARD_QWERTY && configuration.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO
     LaunchedEffect(panelShown) {
-        // Opened to dictate, the keyboard stays down.
-        if (panelShown && !speech.listening) {
+        // Opened to dictate, the keyboard stays down; opened as the plain app drawer, until the bar is tapped.
+        if (panelShown && !speech.listening && (state.keyboardOnOpen || hardKeyboard)) {
             focus.requestFocus()
-            keyboard?.show()
+            if (state.keyboardOnOpen) keyboard?.show()
         } else if (!panelShown && focused) {
             focusManager.clearFocus()
             keyboard?.hide()
