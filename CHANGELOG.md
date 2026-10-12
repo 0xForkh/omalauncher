@@ -15,6 +15,8 @@ Dates are when the build was uploaded to Play.
 - Swipe up on home to open the app drawer, like stock Android; settings → gestures
   can turn it off.
 - The app list starts at the top, Linux apps first; closing the drawer clears the search.
+- Widgets can follow your corner style, from square to round (owl 6).
+- The widget store only takes widgets that pass values into commands safely, with `sh()` (owl 6).
 
 ## 0.5.0 (versionCode 10) – 2026-10-11
 
