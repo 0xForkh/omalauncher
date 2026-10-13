@@ -328,6 +328,7 @@ fun HomeScreen(
                     is Shortcut ->
                         ShortcutTile(
                             shortcut = item,
+                            label = runtime.shortcutLabel(item),
                             icon = runtime.shortcutIcon(item, LauncherStyle.monochromeIcons),
                             focused = highlighted,
                             modifier = tile,
@@ -343,6 +344,7 @@ fun HomeScreen(
                         FolderTile(
                             folder = item,
                             icons = item.apps.take(4).map { runtime.shortcutIcon(it, LauncherStyle.monochromeIcons) },
+                            labels = item.apps.take(4).map { runtime.shortcutLabel(it) },
                             focused = highlighted,
                             modifier = tile,
                             onTap = { arrange.folder = item.key },
