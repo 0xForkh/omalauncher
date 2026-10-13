@@ -512,7 +512,7 @@ internal fun AppPanel(
                             when (shown) {
                                 null -> search.hits.chunked(columns).forEachIndexed { r, cells -> row("q:$r", cells, highlighted - r * columns) }
                                 DrawerTab.Work -> {
-                                    // Below the apps, as on the personal tab.
+                                    // Above the apps, as on the personal tab.
                                     section("shortcuts", apps.shortcuts.filter { it.work }.map { AppHit.Shortcut(it) })
                                     val paused = apps.workProfiles.any { apps.paused(it) }
                                     section(
@@ -537,7 +537,7 @@ internal fun AppPanel(
                                             }
                                         }
                                     }
-                                    // Usually few and just added: right above the Linux apps, not past all the Android ones.
+                                    // Usually few and just added: between the Linux and the Android apps, not past all the Android ones.
                                     section("shortcuts", apps.shortcuts.filter { !it.work }.map { AppHit.Shortcut(it) })
                                     section("android", apps.apps.filter { !it.work }.map { AppHit.Android(it) })
                                 }

@@ -195,7 +195,7 @@ class AndroidAppCatalog(
                     shortcuts: List<ShortcutInfo>,
                     user: UserHandle,
                 ) {
-                    if (shortcuts.any { it.isPinned } || this@AndroidAppCatalog.shortcuts.any { it.ref.packageName == packageName }) reload()
+                    if (shortcuts.any { it.isPinned } || this@AndroidAppCatalog.shortcuts.any { it.ref.packageName == packageName && it.user == user }) reloadShortcuts(packageName, user)
                 }
             },
         )
@@ -417,7 +417,7 @@ class AndroidAppCatalog(
                     apps.clear()
                     apps += list
                 }
-                made = made.sortedWith(compareBy({ it.second.label.lowercase() }, { it.second.profile != null }))
+                made = made.sortedWith(compareBy(shortcutOrder) { it.second })
                 val pinned = made.map { it.second }
                 if (pinned != shortcuts.toList()) {
                     shortcuts.clear()
@@ -436,13 +436,44 @@ class AndroidAppCatalog(
             }
     }
 
-    /** The shortcuts pinned here in [user]'s profile; ones their app turned off (a chat that's gone) can't be opened, so they're left out. */
+    /**
+     * Lists [packageName]'s pinned shortcuts in [user]'s profile again, and draws only their icons: apps such as chat apps
+     * change their shortcuts often, and a full [reload] would list every app in every profile each time.
+     */
+    private fun reloadShortcuts(
+        packageName: String,
+        user: UserHandle,
+    ) {
+        // A full load under way may have listed them before the change: start it over instead.
+        if (loading?.isActive == true || !listsShortcuts) return reload()
+        scope.launch {
+            val profile = serialOf(user)
+            val clone = cloned(profile)
+            val made = withContext(Dispatchers.IO) { pinnedShortcuts(user, profile, clone, packageName) }
+            // One started meanwhile lists these too, and its list is the newer.
+            if (loading?.isActive == true) return@launch
+            val others = shortcuts.filterNot { it.ref.packageName == packageName && it.user == user }
+            val pinned = (others + made.map { it.second }).sortedWith(shortcutOrder)
+            if (pinned != shortcuts.toList()) {
+                shortcuts.clear()
+                shortcuts += pinned
+            }
+            val present = pinned.mapTo(HashSet()) { it.key }
+            val gone = icons.keys.filterTo(HashSet()) { it.startsWith("$packageName/#") && it !in present }
+            icons.keys.removeAll(gone)
+            masks.keys.removeAll(gone)
+            for ((info, shortcut) in made) loadIcon(shortcut.key, shortcut.profile, shortcut.clone) { launcherApps.getShortcutIconDrawable(info, context.resources.displayMetrics.densityDpi) }
+        }
+    }
+
+    /** The shortcuts pinned here in [user]'s profile, or only [packageName]'s; ones their app turned off (a chat that's gone) can't be opened, so they're left out. */
     private fun pinnedShortcuts(
         user: UserHandle,
         profile: Long?,
         clone: Boolean,
+        packageName: String? = null,
     ): List<Pair<ShortcutInfo, AndroidShortcut>> =
-        runCatching { launcherApps.getShortcuts(ShortcutQuery().setQueryFlags(ShortcutQuery.FLAG_MATCH_PINNED), user) }
+        runCatching { launcherApps.getShortcuts(ShortcutQuery().setPackage(packageName).setQueryFlags(ShortcutQuery.FLAG_MATCH_PINNED), user) }
             .onFailure { Log.w(TAG, "cannot list shortcuts in $user", it) }
             .getOrNull()
             .orEmpty()
@@ -516,6 +547,9 @@ class AndroidAppCatalog(
 
     companion object {
         private const val TAG = "apps"
+
+        /** As apps are listed: by name, the owner's before another profile's. */
+        private val shortcutOrder = compareBy<AndroidShortcut>({ it.label.lowercase() }, { it.profile != null })
 
         /** Material's "work" glyph, 24 units square. */
         private val briefcase by lazy {
