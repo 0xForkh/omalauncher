@@ -88,6 +88,9 @@ class Runtime(
 
     /** Silhouettes of [linuxIcons] for the monochrome icon style. */
     val linuxMasks = mutableStateMapOf<String, ImageBitmap>()
+
+    /** The Icon= each of [linuxIcons] was loaded from, to notice an entry changing it. */
+    private val linuxIconNames = HashMap<String, String>()
     val androidApps = AndroidAppCatalog(context)
     val usage = AppUsage(context)
     val themes = ThemeStore(context, proot, style, isLinux = { linux }, onConfigChanged = ::syncGuest)
@@ -255,6 +258,7 @@ class Runtime(
                 linuxApps.clear()
                 linuxIcons.clear()
                 linuxMasks.clear()
+                linuxIconNames.clear()
                 setService(false)
             }
     }
@@ -397,8 +401,18 @@ class Runtime(
             linuxApps += apps
         }
         val ids = apps.mapTo(HashSet()) { it.id }
+        // An entry can change its Icon= under the same id: on a fresh install, pacman's micro.desktop
+        // shows up before the launcher's Editor entry replaces it.
+        for (app in apps) {
+            if (linuxIconNames[app.id].let { it != null && it != app.icon }) {
+                linuxIcons -= app.id
+                linuxMasks -= app.id
+                linuxIconNames -= app.id
+            }
+        }
         linuxIcons.keys.retainAll(ids)
         linuxMasks.keys.retainAll(ids)
+        linuxIconNames.keys.retainAll(ids)
         val missing = apps.filter { it.icon != null && it.id !in linuxIcons }
         if (missing.isEmpty()) return
         val size = (52 * context.resources.displayMetrics.density).toInt()
@@ -406,12 +420,13 @@ class Runtime(
             withContext(Dispatchers.IO) {
                 missing.mapNotNull { app ->
                     val file = resolveLinuxIcon(proot.rootfs, app.icon!!) ?: return@mapNotNull null
-                    decodeIcon(file, size)?.let { Triple(app.id, it.asImageBitmap(), bitmapMask(it).asImageBitmap()) }
+                    decodeIcon(file, size)?.let { Triple(app, it.asImageBitmap(), bitmapMask(it).asImageBitmap()) }
                 }
             }
-        for ((id, icon, mask) in loaded) {
-            linuxIcons[id] = icon
-            linuxMasks[id] = mask
+        for ((app, icon, mask) in loaded) {
+            linuxIcons[app.id] = icon
+            linuxMasks[app.id] = mask
+            linuxIconNames[app.id] = app.icon!!
         }
     }
 
