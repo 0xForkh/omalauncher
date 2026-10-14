@@ -1,13 +1,16 @@
 package dev.omalauncher
 
 import android.app.ActivityManager
+import android.app.ActivityOptions
 import android.content.ComponentCallbacks
 import android.content.Context
 import android.content.res.Configuration
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.util.Log
 import android.view.KeyEvent
+import android.window.SplashScreen
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -535,9 +538,11 @@ class Runtime(
         page: SettingsPage = SettingsPage.Settings,
         homePage: Int? = null,
     ) {
-        // No open-an-app animation: it's part of the launcher.
+        // No open-an-app animation, and no splash with the launcher's icon: it's part of the launcher.
+        val options = if (Build.VERSION.SDK_INT >= 33) ActivityOptions.makeBasic().setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR).toBundle() else null
         context.startActivity(
             SettingsActivity.intent(context, page, homePage).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION),
+            options,
         )
     }
 
