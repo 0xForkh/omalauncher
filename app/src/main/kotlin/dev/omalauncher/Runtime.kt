@@ -329,6 +329,11 @@ class Runtime(
         if (on) scope.launch { gpu.turnOn() } else gpu.turnOff()
     }
 
+    /** Checks for updates now, on the runtime's scope: leaving settings doesn't cancel it. */
+    fun checkUpdates() {
+        if (linux) scope.launch { updates.check(force = true) }
+    }
+
     /** Runs every pending update (packages and agents); the drawer then lists what changed. */
     fun updateSystem() {
         scope.launch {
