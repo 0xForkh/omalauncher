@@ -26,7 +26,6 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
@@ -81,9 +80,7 @@ fun StoreScreen(
         "widget store",
         onDismiss,
         actions = {
-            Box(Modifier.clip(CircleShape).clickable { scope.launch { market.refresh() } }.padding(6.dp)) {
-                Image(Icons.Refresh, "refresh", Modifier.size(20.dp), colorFilter = ColorFilter.tint(Palette.muted))
-            }
+            RefreshButton(market.loading) { scope.launch { market.refresh() } }
         },
     ) {
         BoxWithConstraints {

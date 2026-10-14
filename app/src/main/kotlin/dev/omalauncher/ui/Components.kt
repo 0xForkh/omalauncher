@@ -1,5 +1,12 @@
 package dev.omalauncher.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -15,13 +22,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
@@ -70,6 +83,25 @@ fun OverlayPanel(
                 Column(Modifier.weight(1f).widthIn(max = contentWidth).fillMaxWidth().align(Alignment.CenterHorizontally), content = content)
             }
         }
+    }
+}
+
+/** An [OverlayPanel] action that reloads a list; it spins in the accent color while [loading], and taps then do nothing. */
+@Composable
+fun RefreshButton(
+    loading: Boolean,
+    onRefresh: () -> Unit,
+) {
+    Box(Modifier.clip(CircleShape).clickable(enabled = !loading, onClick = onRefresh).padding(6.dp)) {
+        val turn =
+            if (loading) {
+                val angle by rememberInfiniteTransition(label = "refresh")
+                    .animateFloat(0f, 360f, infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Restart), label = "turn")
+                Modifier.rotate(angle)
+            } else {
+                Modifier
+            }
+        Image(Icons.Refresh, if (loading) "refreshing" else "refresh", Modifier.size(20.dp).then(turn), colorFilter = ColorFilter.tint(if (loading) Palette.accent else Palette.muted))
     }
 }
 
