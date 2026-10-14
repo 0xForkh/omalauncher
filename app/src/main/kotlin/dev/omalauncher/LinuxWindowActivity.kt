@@ -12,9 +12,7 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -60,7 +58,7 @@ import kotlinx.coroutines.flow.first
  * Shows a single Linux window as its own Android task, so it gets its own
  * Recents card and behaves like a separate app.
  */
-class LinuxWindowActivity : ComponentActivity() {
+class LinuxWindowActivity : InstantActivity() {
     private val runtime get() = (application as App).runtime
     private var window: XdgToplevel? = null
 
@@ -74,13 +72,13 @@ class LinuxWindowActivity : ComponentActivity() {
         }
         this.window = window
         applySystemBars(this, Palette.isLight)
-        setContent {
+        setInstantContent {
             LaunchedEffect(Palette.isLight) { applySystemBars(this@LinuxWindowActivity, Palette.isLight) }
             AppWindow(runtime, window)
-            BackHandler { moveTaskToBack(true) }
+            BackHandler { backInstantly() }
             LaunchedEffect(window) {
                 snapshotFlow { window in runtime.wm.appWindows }.first { !it }
-                finishAndRemoveTask()
+                closeInstantly()
             }
             // Terminals retitle constantly; only a new label changes the Recents card.
             val label = runtime.displayName(window.appId, window.title)

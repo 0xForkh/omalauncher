@@ -8,8 +8,6 @@ import android.os.Bundle
 import android.system.ErrnoException
 import android.system.Os
 import android.system.OsConstants
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.toArgb
 import dev.omalauncher.linux.shellQuote
@@ -24,7 +22,7 @@ import dev.omalauncher.ui.applySystemBars
  * the shim's reply FIFOs and answers once it closes, which is what makes
  * `git commit` wait for the message, as with a terminal editor.
  */
-class EditorActivity : ComponentActivity() {
+class EditorActivity : InstantActivity() {
     private val runtime get() = (application as App).runtime
 
     /** Host paths of the `omarchy-edit` FIFOs waiting for this file to close. */
@@ -38,7 +36,7 @@ class EditorActivity : ComponentActivity() {
         val name = path?.substringAfterLast('/') ?: "Editor"
         setTaskDescription(ActivityManager.TaskDescription(name, null, Palette.background.toArgb()))
         applySystemBars(this, Palette.isLight)
-        setContent {
+        setInstantContent {
             LaunchedEffect(Palette.isLight) { applySystemBars(this@EditorActivity, Palette.isLight) }
             if (path == null) {
                 EditorHome(runtime, onExit = ::close)
@@ -62,7 +60,7 @@ class EditorActivity : ComponentActivity() {
 
     private fun close() {
         answer("ok")
-        finishAndRemoveTask()
+        closeInstantly()
     }
 
     /** A file the editor can't take: micro gets it, in the terminal that asked or a new one. */
@@ -72,7 +70,7 @@ class EditorActivity : ComponentActivity() {
         } else {
             runtime.terminal("micro ${shellQuote(path)}", path.substringAfterLast('/'))
         }
-        finishAndRemoveTask()
+        closeInstantly()
     }
 
     /**

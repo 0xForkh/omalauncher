@@ -1,16 +1,13 @@
 package dev.omalauncher
 
 import android.app.ActivityManager
-import android.app.ActivityOptions
 import android.content.ComponentCallbacks
 import android.content.Context
 import android.content.res.Configuration
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.util.Log
 import android.view.KeyEvent
-import android.window.SplashScreen
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -178,14 +175,12 @@ class Runtime(
                     "btop" -> "BtopWindow"
                     else -> agentOf(window?.appId.orEmpty(), name)?.windowAlias ?: "LinuxWindowActivity"
                 }
-            context.startActivity(
+            InstantActivity.startInstantly(
+                context,
                 Intent()
                     .setClassName(context, "dev.omalauncher.$activity")
                     .setData(Uri.parse("omarchy://window/$handle"))
-                    .addFlags(
-                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT or
-                            Intent.FLAG_ACTIVITY_MULTIPLE_TASK,
-                    ),
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT or Intent.FLAG_ACTIVITY_MULTIPLE_TASK),
             )
         }
     }
@@ -538,21 +533,12 @@ class Runtime(
         page: SettingsPage = SettingsPage.Settings,
         homePage: Int? = null,
     ) {
-        // No open-an-app animation, and no splash with the launcher's icon: it's part of the launcher.
-        val options = if (Build.VERSION.SDK_INT >= 33) ActivityOptions.makeBasic().setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR).toBundle() else null
-        context.startActivity(
-            SettingsActivity.intent(context, page, homePage).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION),
-            options,
-        )
+        InstantActivity.startInstantly(context, SettingsActivity.intent(context, page, homePage))
     }
 
     /** Opens the Files app, at [path] (a guest path) if given. */
     fun openFiles(path: String? = null) {
-        context.startActivity(
-            Intent(context, FilesActivity::class.java)
-                .putExtra(FilesActivity.EXTRA_PATH, path)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
+        InstantActivity.startInstantly(context, Intent(context, FilesActivity::class.java).putExtra(FilesActivity.EXTRA_PATH, path))
     }
 
     /**
@@ -563,7 +549,7 @@ class Runtime(
         path: String? = null,
         done: String? = null,
     ) {
-        context.startActivity(EditorActivity.intent(context, path, done).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        InstantActivity.startInstantly(context, EditorActivity.intent(context, path, done))
     }
 
     /** Starts a command inside the guest; its output goes to logcat. Returns at once; [onExit] runs on the launch thread. */
