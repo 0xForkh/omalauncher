@@ -2,6 +2,8 @@ package dev.omalauncher
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import dev.omalauncher.ui.Palette
 import dev.omalauncher.ui.SettingsPage
@@ -36,21 +39,29 @@ class SettingsActivity : ComponentActivity() {
         applySystemBars(this, Palette.isLight)
         setContent {
             LaunchedEffect(Palette.isLight) { applySystemBars(this@SettingsActivity, Palette.isLight) }
-            LaunchedEffect(stack.isEmpty()) { if (stack.isEmpty()) close() }
-            SettingsPages(runtime, stack, homePage)
+            if (!closing) SettingsPages(runtime, stack, homePage, onClose = ::close)
         }
     }
 
-    /** Back from the last screen: gone at once, as it came. */
+    /** Set once the last screen closed and the window is see-through: nothing more is drawn. */
+    private var closing by mutableStateOf(false)
+    private var closeAsked = false
+
+    /**
+     * Back from the last screen. Android slides a closing task away, whatever the
+     * app asks, so the window turns see-through and empty first: what slides is invisible.
+     */
     private fun close() {
-        if (Build.VERSION.SDK_INT >= 34) {
-            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
-        }
-        finishAndRemoveTask()
-        if (Build.VERSION.SDK_INT < 34) {
-            @Suppress("DEPRECATION")
-            overridePendingTransition(0, 0)
-        }
+        if (closeAsked) return
+        closeAsked = true
+        if (Build.VERSION.SDK_INT < 30) return finishAndRemoveTask()
+        setTranslucent(true)
+        // Until the system has made it see-through, an empty window shows black.
+        window.decorView.postDelayed({
+            closing = true
+            window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            window.decorView.postOnAnimation { finishAndRemoveTask() }
+        }, 80)
     }
 
     override fun onNewIntent(intent: Intent) {

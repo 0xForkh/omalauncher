@@ -41,19 +41,22 @@ fun SnapshotStateList<SettingsPage>.pop(page: SettingsPage) {
 
 /**
  * The open settings screens, each drawn over the one that opened it, as they were
- * over home. [homePage] is the home page the store puts widgets on.
+ * over home. [homePage] is the home page the store puts widgets on. Closing the
+ * first one calls [onClose] instead, so it stays drawn until the window goes.
  */
 @Composable
 fun SettingsPages(
     runtime: Runtime,
     stack: SnapshotStateList<SettingsPage>,
     homePage: Int,
+    onClose: () -> Unit,
 ) {
+    val close = { page: SettingsPage -> if (stack.indexOf(page) == 0) onClose() else stack.pop(page) }
     // The screens' own back handlers (a store page, a license) come later, so they go first.
-    BackHandler(enabled = stack.isNotEmpty()) { stack.removeAt(stack.lastIndex) }
+    BackHandler(enabled = stack.isNotEmpty()) { close(stack.last()) }
     Box(Modifier.fillMaxSize().background(Palette.background)) {
         for (page in stack.toList()) {
-            key(page) { SettingsPage(runtime, page, stack, homePage) }
+            key(page) { SettingsPage(runtime, page, stack, homePage, onDismiss = { close(page) }) }
         }
     }
 }
@@ -64,8 +67,9 @@ private fun SettingsPage(
     page: SettingsPage,
     stack: SnapshotStateList<SettingsPage>,
     homePage: Int,
+    onDismiss: () -> Unit,
 ) {
-    val close = { stack.pop(page) }
+    val close = onDismiss
     when (page) {
         SettingsPage.Settings ->
             SettingsScreen(
