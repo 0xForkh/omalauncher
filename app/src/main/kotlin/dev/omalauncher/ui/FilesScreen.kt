@@ -118,7 +118,7 @@ fun FilesScreen(
         }
     }
 
-    fun edit(entry: GuestEntry) = runtime.terminal("micro ${shellQuote(entry.path)}", entry.name)
+    fun edit(entry: GuestEntry) = runtime.edit(entry.path)
 
     fun open(entry: GuestEntry) {
         if (entry.isDir) return navigate(fs.resolve(entry.path))

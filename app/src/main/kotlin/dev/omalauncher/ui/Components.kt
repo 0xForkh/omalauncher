@@ -115,10 +115,12 @@ fun PanelTitle(text: String) = BasicText(text, style = Mono.copy(color = Palette
 fun PanelIcon(
     icon: ImageVector,
     description: String,
+    /** Degrees, to point [Icons.Chevron] another way. */
+    rotation: Float = 0f,
     onClick: () -> Unit,
 ) {
     Box(Modifier.clip(CircleShape).clickable(onClick = onClick).padding(6.dp)) {
-        Image(icon, description, Modifier.size(20.dp), colorFilter = ColorFilter.tint(Palette.muted))
+        Image(icon, description, Modifier.size(20.dp).rotate(rotation), colorFilter = ColorFilter.tint(Palette.muted))
     }
 }
 

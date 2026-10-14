@@ -21,6 +21,7 @@ import dev.omalauncher.linux.Agent
 import dev.omalauncher.linux.AgentStore
 import dev.omalauncher.linux.AudioBridge
 import dev.omalauncher.linux.Bootstrap
+import dev.omalauncher.linux.EDIT_COMMAND
 import dev.omalauncher.linux.FILES_COMMAND
 import dev.omalauncher.linux.Gpu
 import dev.omalauncher.linux.LinuxApp
@@ -90,7 +91,7 @@ class Runtime(
     val usage = AppUsage(context)
     val themes = ThemeStore(context, proot, style, isLinux = { linux }, onConfigChanged = ::syncGuest)
     private val audio = AudioBridge(proot)
-    private val openBridge = OpenBridge(context, proot, onOpenFiles = ::openFiles)
+    private val openBridge = OpenBridge(context, proot, onOpenFiles = ::openFiles, onEdit = ::edit)
     val agents = AgentStore(proot, onChanged = ::syncGuest)
     val pacman = Pacman(context, proot)
     val widgets = WidgetEngine(context, proot, this)
@@ -487,6 +488,7 @@ class Runtime(
     fun launch(app: LinuxApp) {
         // Our own Files app: open it directly rather than round-tripping through the guest.
         if (app.exec == FILES_COMMAND) return openFiles()
+        if (app.exec == EDIT_COMMAND) return edit()
         if (app.terminal) return terminal(app.exec, app.name)
         // Like an Android icon: an app that already has a window comes back to it. Single-instance
         // apps would otherwise just exit on a second launch, showing nothing. Quickshell apps (App Finder)
@@ -534,6 +536,17 @@ class Runtime(
                 .putExtra(FilesActivity.EXTRA_PATH, path)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
+    }
+
+    /**
+     * Opens [path] (a guest path) in the editor, or its start page without one.
+     * [done] is the host path of a FIFO that gets a reply once the file is closed (see OpenBridge's shim).
+     */
+    fun edit(
+        path: String? = null,
+        done: String? = null,
+    ) {
+        context.startActivity(EditorActivity.intent(context, path, done).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
     /** Starts a command inside the guest; its output goes to logcat. Returns at once; [onExit] runs on the launch thread. */

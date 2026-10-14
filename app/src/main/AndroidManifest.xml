@@ -175,6 +175,17 @@
             android:theme="@style/Theme.Omalauncher.Window"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- One task per file, named after it; launched with the file in the intent's data. -->
+        <activity
+            android:name=".EditorActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode"
+            android:documentLaunchMode="intoExisting"
+            android:exported="false"
+            android:label="Editor"
+            android:resizeableActivity="true"
+            android:theme="@style/Theme.Omalauncher.Window"
+            android:windowSoftInputMode="adjustResize" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="dev.omalauncher.files"
