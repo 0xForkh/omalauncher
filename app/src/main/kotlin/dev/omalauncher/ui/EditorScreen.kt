@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -68,6 +69,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.omalauncher.Runtime
 import dev.omalauncher.linux.GuestFs
@@ -364,9 +366,10 @@ private fun Gutter(
     val style = Mono.copy(color = Palette.muted, fontSize = TextSize.Large)
     val text = state.text
     val starts = remember(text) { lineStarts(text) }
-    val width = with(density) { measurer.measure("0".repeat(starts.size.toString().length), style).size.width.toDp() } + 12.dp
+    // The widest number, then the gap to the text.
+    val width = with(density) { measurer.measure("0".repeat(starts.size.toString().length), style).size.width.toDp() } + 8.dp
     val cursor = state.selection.start
-    Canvas(modifier.width(width).clipToBounds()) {
+    Canvas(modifier.width(width).reachLeft(GutterReach).clipToBounds()) {
         val l = layout ?: return@Canvas
         // The layout trails an edit by a frame; draw only lines it already has.
         val length = l.layoutInput.text.length
@@ -383,6 +386,17 @@ private fun Gutter(
         }
     }
 }
+
+/** How far the line numbers reach into the panel's padding, so they don't take more room than they need. */
+private val GutterReach = 4.dp
+
+/** Draws the element [by] further left, into its parent's padding, taking that much less room. */
+private fun Modifier.reachLeft(by: Dp) =
+    layout { measurable, constraints ->
+        val reach = by.roundToPx()
+        val placeable = measurable.measure(constraints)
+        layout((placeable.width - reach).coerceAtLeast(0), placeable.height) { placeable.place(-reach, 0) }
+    }
 
 /** One key above the keyboard: a label, or [icon] turned [rotation] degrees. */
 private class EditorKey(
