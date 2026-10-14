@@ -2,6 +2,7 @@ package dev.omalauncher
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,8 +36,20 @@ class SettingsActivity : ComponentActivity() {
         applySystemBars(this, Palette.isLight)
         setContent {
             LaunchedEffect(Palette.isLight) { applySystemBars(this@SettingsActivity, Palette.isLight) }
-            LaunchedEffect(stack.isEmpty()) { if (stack.isEmpty()) finishAndRemoveTask() }
+            LaunchedEffect(stack.isEmpty()) { if (stack.isEmpty()) close() }
             SettingsPages(runtime, stack, homePage)
+        }
+    }
+
+    /** Back from the last screen: as quick as opening was. */
+    private fun close() {
+        if (Build.VERSION.SDK_INT >= 34) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.hold, R.anim.panel_close)
+        }
+        finishAndRemoveTask()
+        if (Build.VERSION.SDK_INT < 34) {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(R.anim.hold, R.anim.panel_close)
         }
     }
 

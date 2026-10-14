@@ -1,6 +1,7 @@
 package dev.omalauncher
 
 import android.app.ActivityManager
+import android.app.ActivityOptions
 import android.content.ComponentCallbacks
 import android.content.Context
 import android.content.res.Configuration
@@ -535,7 +536,11 @@ class Runtime(
         page: SettingsPage = SettingsPage.Settings,
         homePage: Int? = null,
     ) {
-        context.startActivity(SettingsActivity.intent(context, page, homePage).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        context.startActivity(
+            SettingsActivity.intent(context, page, homePage).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            // Quicker than the system's open-an-app animation: it's part of the launcher.
+            ActivityOptions.makeCustomAnimation(context, R.anim.panel_open, R.anim.hold).toBundle(),
+        )
     }
 
     /** Opens the Files app, at [path] (a guest path) if given. */

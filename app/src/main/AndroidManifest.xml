@@ -179,7 +179,7 @@
             android:name=".SettingsActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode"
             android:exported="false"
-            android:label="Launcher settings"
+            android:label="Settings"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
             android:taskAffinity="dev.omalauncher.settings"
