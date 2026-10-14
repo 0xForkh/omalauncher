@@ -535,7 +535,7 @@ internal fun AppPanel(
                                                 BasicText("linux apps", Modifier.weight(1f), style = Mono.copy(color = Palette.muted))
                                                 BracketAction(if (linuxState is LinuxState.Installing) "installing…" else "install linux", Palette.accent) {
                                                     state.closeNow()
-                                                    state.linuxOpen = true
+                                                    state.show(SettingsPage.Linux)
                                                 }
                                             }
                                         }

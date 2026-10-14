@@ -43,6 +43,7 @@ import dev.omalauncher.theme.StyleStore
 import dev.omalauncher.theme.ThemeStore
 import dev.omalauncher.ui.Gestures
 import dev.omalauncher.ui.KeyboardBridge
+import dev.omalauncher.ui.SettingsPage
 import dev.omalauncher.ui.TerminalTiles
 import dev.omalauncher.ui.WindowManager
 import dev.omalauncher.ui.bitmapMask
@@ -138,9 +139,6 @@ class Runtime(
 
     /** The Linux install and removal; one at a time. */
     private var linuxJob: Job? = null
-
-    /** Set when something that needs Linux was asked for without it; the home screen opens the install sheet and clears it. */
-    var linuxWanted by mutableStateOf(false)
 
     init {
         // Saved, so removing Linux later doesn't bring the first-run screen back.
@@ -466,7 +464,7 @@ class Runtime(
         agent: Agent? = null,
     ) {
         if (!linux) {
-            linuxWanted = true
+            openSettings(SettingsPage.Linux)
             return
         }
         // Per agent, so a Claude and a Grok "New app" don't share an app_id.
@@ -529,6 +527,17 @@ class Runtime(
     /** The drawer icon of the app called [name] (an agent's logo, say); null until loaded, or if it has none. */
     fun iconNamed(name: String): ImageBitmap? = linuxApps.firstOrNull { it.name == name }?.let { linuxIcons[it.id] }
 
+    /**
+     * Opens the settings activity at [page]: settings itself comes back to where it was left, another screen
+     * shows on its own (see [SettingsActivity]). [homePage] is where the store puts widgets.
+     */
+    fun openSettings(
+        page: SettingsPage = SettingsPage.Settings,
+        homePage: Int? = null,
+    ) {
+        context.startActivity(SettingsActivity.intent(context, page, homePage).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
     /** Opens the Files app, at [path] (a guest path) if given. */
     fun openFiles(path: String? = null) {
         context.startActivity(
@@ -555,7 +564,7 @@ class Runtime(
         onExit: () -> Unit = {},
     ) {
         if (!linux) {
-            linuxWanted = true
+            openSettings(SettingsPage.Linux)
             onExit()
             return
         }
