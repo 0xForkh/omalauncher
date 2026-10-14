@@ -41,15 +41,15 @@ class SettingsActivity : ComponentActivity() {
         }
     }
 
-    /** Back from the last screen: as quick as opening was. */
+    /** Back from the last screen: gone at once, as it came. */
     private fun close() {
         if (Build.VERSION.SDK_INT >= 34) {
-            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.hold, R.anim.panel_close)
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
         }
         finishAndRemoveTask()
         if (Build.VERSION.SDK_INT < 34) {
             @Suppress("DEPRECATION")
-            overridePendingTransition(R.anim.hold, R.anim.panel_close)
+            overridePendingTransition(0, 0)
         }
     }
 

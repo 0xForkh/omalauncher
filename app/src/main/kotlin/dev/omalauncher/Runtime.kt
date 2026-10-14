@@ -1,7 +1,6 @@
 package dev.omalauncher
 
 import android.app.ActivityManager
-import android.app.ActivityOptions
 import android.content.ComponentCallbacks
 import android.content.Context
 import android.content.res.Configuration
@@ -536,10 +535,9 @@ class Runtime(
         page: SettingsPage = SettingsPage.Settings,
         homePage: Int? = null,
     ) {
+        // No open-an-app animation: it's part of the launcher.
         context.startActivity(
-            SettingsActivity.intent(context, page, homePage).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            // Quicker than the system's open-an-app animation: it's part of the launcher.
-            ActivityOptions.makeCustomAnimation(context, R.anim.panel_open, R.anim.hold).toBundle(),
+            SettingsActivity.intent(context, page, homePage).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION),
         )
     }
 
