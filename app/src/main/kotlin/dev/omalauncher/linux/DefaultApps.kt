@@ -30,7 +30,7 @@ private val CURATED =
         "foot" to entry("Terminal", "foot", terminal = false, icon = "foot"),
         "btop" to entry("btop", "btop", icon = "btop"),
         "omarchy-files" to entry("Files", FILES_COMMAND, terminal = false, icon = bundledIcon("files")),
-        "micro" to entry("Editor", EDIT_COMMAND, terminal = false, icon = "micro"),
+        "micro" to entry("Editor", EDIT_COMMAND, terminal = false, icon = bundledIcon("editor")),
         "lazygit" to entry("Lazygit", "lazygit"),
         "cliamp" to entry("Cliamp", "cliamp", icon = bundledIcon("cliamp")),
         "fastfetch" to entry("Fastfetch", "bash -c \"fastfetch; exec bash\"", icon = bundledIcon("fastfetch")),

@@ -181,6 +181,7 @@
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode"
             android:documentLaunchMode="intoExisting"
             android:exported="false"
+            android:icon="@drawable/editor"
             android:label="Editor"
             android:resizeableActivity="true"
             android:theme="@style/Theme.Omalauncher.Window"
