@@ -35,8 +35,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -62,27 +64,61 @@ fun OverlayPanel(
             .safeDrawingPadding()
             .padding(PanelGap),
     ) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .frame(LauncherStyle.panelBorderWidth, Palette.accent, Palette.background, radius = 20.dp)
-                // Taps inside the panel don't reach the scrim behind it.
-                .pointerInput(Unit) { detectTapGestures { } }
-                .padding(PanelPadding),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                BasicText(title, style = Mono.copy(color = Palette.accent, fontSize = TextSize.Title))
-                Spacer(Modifier.weight(1f))
-                actions()
-                Symbol(Glyph.Close, Palette.red, Modifier.clickable(onClick = onDismiss).padding(8.dp), TextSize.Title)
-            }
-            Spacer(Modifier.height(8.dp))
-            if (contentWidth == Dp.Unspecified) {
-                content()
-            } else {
-                Column(Modifier.weight(1f).widthIn(max = contentWidth).fillMaxWidth().align(Alignment.CenterHorizontally), content = content)
-            }
+        PanelFrame(
+            onClose = onDismiss,
+            // Taps inside the panel don't reach the scrim behind it.
+            modifier = Modifier.pointerInput(Unit) { detectTapGestures { } },
+            title = { PanelTitle(title) },
+            actions = actions,
+            contentWidth = contentWidth,
+            content = content,
+        )
+    }
+}
+
+/** [OverlayPanel]'s frame without the scrim, for a screen of its own (Files): [title] fills the header up to the [actions] and close mark. */
+@Composable
+fun PanelFrame(
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+    title: @Composable () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {},
+    contentWidth: Dp = Dp.Unspecified,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier
+            .fillMaxSize()
+            .frame(LauncherStyle.panelBorderWidth, Palette.accent, Palette.background, radius = 20.dp)
+            .padding(PanelPadding),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.weight(1f)) { title() }
+            actions()
+            Symbol(Glyph.Close, Palette.red, Modifier.clickable(onClick = onClose).padding(8.dp), TextSize.Title)
         }
+        Spacer(Modifier.height(8.dp))
+        if (contentWidth == Dp.Unspecified) {
+            content()
+        } else {
+            Column(Modifier.weight(1f).widthIn(max = contentWidth).fillMaxWidth().align(Alignment.CenterHorizontally), content = content)
+        }
+    }
+}
+
+/** A panel's title, in the accent color. */
+@Composable
+fun PanelTitle(text: String) = BasicText(text, style = Mono.copy(color = Palette.accent, fontSize = TextSize.Title), maxLines = 1, overflow = TextOverflow.Ellipsis)
+
+/** An [OverlayPanel] action drawn with one of [Icons]: muted, the size of [RefreshButton]. */
+@Composable
+fun PanelIcon(
+    icon: ImageVector,
+    description: String,
+    onClick: () -> Unit,
+) {
+    Box(Modifier.clip(CircleShape).clickable(onClick = onClick).padding(6.dp)) {
+        Image(icon, description, Modifier.size(20.dp), colorFilter = ColorFilter.tint(Palette.muted))
     }
 }
 

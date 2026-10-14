@@ -26,7 +26,7 @@ private val CURATED =
     mapOf(
         "foot" to entry("Terminal", "foot", terminal = false, icon = "foot"),
         "btop" to entry("btop", "btop", icon = "btop"),
-        "omarchy-files" to entry("Files", FILES_COMMAND, terminal = false),
+        "omarchy-files" to entry("Files", FILES_COMMAND, terminal = false, icon = bundledIcon("files")),
         "micro" to entry("Editor", "micro", icon = "micro"),
         "lazygit" to entry("Lazygit", "lazygit"),
         "cliamp" to entry("Cliamp", "cliamp", icon = bundledIcon("cliamp")),

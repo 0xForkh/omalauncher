@@ -167,6 +167,7 @@
             android:name=".FilesActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode"
             android:exported="false"
+            android:icon="@drawable/files"
             android:label="Files"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
