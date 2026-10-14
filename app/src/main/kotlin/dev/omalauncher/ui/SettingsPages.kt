@@ -91,7 +91,7 @@ private fun SettingsPage(
                 onDismiss = close,
                 onOpen = { agent ->
                     close()
-                    runtime.terminal(agent.bin, agent.name, agent)
+                    runtime.terminal(agent.command, agent.name, agent)
                 },
             )
         SettingsPage.Store -> StoreScreen(runtime.widgets, runtime.agents.installed, homePage, runtime.themes.picked, onDismiss = close)

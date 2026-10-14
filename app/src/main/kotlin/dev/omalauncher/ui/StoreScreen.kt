@@ -217,7 +217,7 @@ private fun StoreList(
                 items(agents, key = { "agent:" + it.bin }, span = { GridItemSpan(maxLineSpan) }) { agent ->
                     BuiltInEntry(
                         agent.name,
-                        "6x6 · runs ${agent.bin} in ~",
+                        "6x6 · runs ${agent.command} in ~",
                         "${agent.description}, in a terminal on the home screen. Tap the tile to type.",
                         added = engine.hasAgentWidget(agent),
                         page = page,

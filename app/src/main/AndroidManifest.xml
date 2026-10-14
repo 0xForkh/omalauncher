@@ -163,6 +163,34 @@
             android:label="Pi"
             android:targetActivity=".LinuxWindowActivity" />
 
+        <activity-alias
+            android:name=".OmpWindow"
+            android:exported="false"
+            android:icon="@drawable/agent_omp"
+            android:label="Oh My Pi"
+            android:targetActivity=".LinuxWindowActivity" />
+
+        <activity-alias
+            android:name=".OriWindow"
+            android:exported="false"
+            android:icon="@drawable/agent_ori"
+            android:label="Ori"
+            android:targetActivity=".LinuxWindowActivity" />
+
+        <activity-alias
+            android:name=".MuseWindow"
+            android:exported="false"
+            android:icon="@drawable/agent_muse"
+            android:label="Muse Code"
+            android:targetActivity=".LinuxWindowActivity" />
+
+        <activity-alias
+            android:name=".KimiWindow"
+            android:exported="false"
+            android:icon="@drawable/agent_kimi"
+            android:label="Kimi"
+            android:targetActivity=".LinuxWindowActivity" />
+
         <activity
             android:name=".FilesActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode"
