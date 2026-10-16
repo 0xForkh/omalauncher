@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="wallpaper_label">Omarchy</string>
+    <string name="home_redirect_label">Omalauncher home button</string>
+    <string name="home_redirect_description">Opens Omalauncher when the Home button lands on the phone\'s stock launcher. It only sees when another home screen comes to the front, never what\'s on screen. Recents and gestures keep working.</string>
     <string name="wallpaper_description">The current Omarchy theme background. System colors follow the theme.</string>
 </resources>
